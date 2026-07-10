@@ -1,0 +1,38 @@
+{
+    "family": "tallycashpro-tally-cash-pro-web",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "2048",
+    "memory": "4096",
+    "containerDefinitions": [
+        {
+            "name": "Main",
+            "image": "668567158221.dkr.ecr.me-central-1.amazonaws.com/tallycashpro/tallycashpro-web:latest",
+            "essential": true,
+            "portMappings": [
+                {
+                    "name": "webport",
+                    "containerPort": 3000,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "environment": [
+                {
+                    "name": "NEXT_PUBLIC_BASE_URL",
+                    "value": "https://api-v1.tallycashpro.com/v1/api"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/aws/ecs/tallycashpro/tally-cash-pro-web-49ac",
+                    "awslogs-region": "me-central-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            }
+        }
+    ],
+    "taskRoleArn": "arn:aws:iam::668567158221:role/ecsTaskExecutionRole",
+    "executionRoleArn": "arn:aws:iam::668567158221:role/ecsTaskExecutionRole"
+}
