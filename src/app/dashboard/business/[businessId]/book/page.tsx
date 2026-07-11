@@ -445,7 +445,7 @@ export default function BookPage() {
 
           {/* Header row inside LEFT PANEL */}
           <div className="flex items-center justify-between py-3 px-6 pb-3 bg-white shrink-0 border-b">
-            <h2 className="text-sm md:text-base font-extrabold text-gray-900 uppercase tracking-wide">
+            <h2 className="text-md md:text-base font-extrabold text-gray-900 uppercase tracking-wide">
             {company?.name
               ? `${company.name.slice(0, 35)}${company.name.length > 35 ? "..." : ""}`
               : "Books Entries"}
@@ -455,7 +455,7 @@ export default function BookPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => refetchTransactions()}
-                className="h-7 border-gray-200 text-[10px] font-semibold px-2 hover:bg-gray-50 flex items-center gap-1 text-gray-700 rounded-lg shrink-0 cursor-pointer"
+                className="h-7 border-gray-200 text-[14px] font-semibold px-2 hover:bg-gray-50 flex items-center gap-1 text-gray-700 rounded-lg shrink-0 cursor-pointer"
               >
                 <RefreshCw className="w-3 h-3" />
                 <span>Refresh</span>
@@ -463,7 +463,7 @@ export default function BookPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 border-gray-200 text-[10px] font-semibold px-2 hover:bg-gray-50 hover:border-gray-300 flex items-center gap-1 text-gray-700 rounded-lg shrink-0 cursor-pointer transition-colors"
+                className="h-7 border-gray-200 text-[14px] font-semibold px-2 hover:bg-gray-50 hover:border-gray-300 flex items-center gap-1 text-gray-700 rounded-lg shrink-0 cursor-pointer transition-colors"
                 asChild
               >
                 <Link href={`/dashboard/business/${businessId}/${activeBookId}/setting`}>
@@ -480,7 +480,7 @@ export default function BookPage() {
                       setIsMobileOpen(true);
                     }
                   }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-3 h-7 text-[10px] flex items-center gap-1 shadow-sm transition-all duration-200 active:scale-95 shrink-0 cursor-pointer"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-3 h-7 text-[14px] flex items-center gap-1 shadow-sm transition-all duration-200 active:scale-95 shrink-0 cursor-pointer"
                 >
                   <span>New Book</span>
                   <Plus className="w-3 h-3" />
@@ -683,9 +683,9 @@ export default function BookPage() {
           </div>
 
           {/* Financial Summary Card */}
-          <div className="px-6 py-4 bg-white border-b border-gray-100 shrink-0">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex gap-12 flex-1">
+          <div className="px-10 py-4 bg-white border-b border-gray-100 shrink-0">
+            <div className="flex items-center justify-between gap-6">
+              <div className="flex gap-14 flex-1">
                 {/* Cash In */}
                 <div>
                   <div className="text-2xl font-bold text-green-600">
@@ -737,9 +737,9 @@ export default function BookPage() {
 
           {/* Ledger Table Headers */}
           <div className="grid grid-cols-10 pl-6 pr-[30px] py-2 bg-gray-50 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wide shrink-0">
-            <div className="col-span-6 ml-6">Entries</div>
-            <div className="col-span-2 text-center">Cash In</div>
-            <div className="col-span-2 text-center">Cash Out</div>
+            <div className="col-span-5 ml-6">Entity</div>
+            <div className="col-span-3 text-right">Cash In / Out</div>
+            <div className="col-span-2 text-right">Balance</div>
           </div>
 
           {/* Transaction List Entries */}
@@ -748,15 +748,15 @@ export default function BookPage() {
               // Loading Skeleton
               [...Array(5)].map((_, i) => (
                 <div key={i} className="grid grid-cols-10 items-center p-3 bg-white border border-gray-100 rounded-xl animate-pulse">
-                  <div className="col-span-6 space-y-2 ">
+                  <div className="col-span-5 space-y-2">
                     <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-48" />
+                    <Skeleton className="h-3 w-40" />
                   </div>
-                  <div className="col-span-2">
-                    <Skeleton className="h-4 w-12 mx-auto" />
+                  <div className="col-span-3 flex justify-end pr-5">
+                    <Skeleton className="h-4 w-20" />
                   </div>
-                  <div className="col-span-2">
-                    <Skeleton className="h-4 w-12 mx-auto" />
+                  <div className="col-span-2 flex justify-end pr-5">
+                    <Skeleton className="h-4 w-16" />
                   </div>
                 </div>
               ))
@@ -780,7 +780,7 @@ export default function BookPage() {
               <>
                 {filteredTransactions.map((tx) => {
                   const isSelected = tx._id === selectedTransactionId;
-                  const formattedDate = format(parseISO(tx.date), "dd MMM, yyyy");
+                  const formattedDate = format(parseISO(tx.date), "dd MMM yy");
                   const formattedTime = tx.time || "";
                   const isCashIn = tx.type === "cash_in";
 
@@ -793,37 +793,33 @@ export default function BookPage() {
                         : "border-gray-200"
                         }`}
                     >
-                      {/* Left details */}
-                      <div className="col-span-6 p-3 flex flex-col items-start gap-1 bg-white">
-                        <span className="text-xs font-semibold text-gray-400">
+                      {/* Column 1: Entity */}
+                      <div className="col-span-5 p-4 flex flex-col justify-center gap-2 bg-white">
+                        <span className="text-[11px] font-semibold text-slate-500">
                           {formattedDate} {formattedTime && `• ${formattedTime}`}
                         </span>
                         {tx.runningBalance !== undefined && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-[4px] bg-[#eef5ff] text-[#1b66ff] inline-block w-fit">
                             Bal. {formatAmount(tx.runningBalance)}
                           </span>
                         )}
-                        <span className="text-xs font-semibold text-gray-600">
+                        <span className="text-xs font-semibold text-slate-500 truncate max-w-full">
                           {tx.paymentModeDetails?.name || tx.paymentMode || "Cash"} • {tx.party || tx.remark || tx.description || "Self"}
                         </span>
                       </div>
 
-                      {/* Middle Column: Cash In */}
-                      <div className="col-span-2 flex items-center justify-center border-l border-gray-100 bg-gray-50/30 p-3">
-                        {isCashIn ? (
-                          <span className="text-sm font-bold text-[#00a854]">
-                            {formatAmount(tx.amount)}
-                          </span>
-                        ) : null}
+                      {/* Column 2: Cash In / Out */}
+                      <div className="col-span-3 flex items-center justify-end border-l border-gray-100 bg-gray-50/10 p-3 pr-5 bg-gray-400/20">
+                        <span className={`text-sm font-bold tracking-tight ${isCashIn ? "text-[#00a854]" : "text-[#e60000]"}`}>
+                          {isCashIn ? "+ " : "- "}{formatAmount(tx.amount)}
+                        </span>
                       </div>
 
-                      {/* Right Column: Cash Out */}
-                      <div className="col-span-2 flex items-center justify-center border-l border-gray-100 bg-gray-50/30 p-3">
-                        {!isCashIn ? (
-                          <span className="text-sm font-bold text-[#e60000]">
-                            {formatAmount(tx.amount)}
-                          </span>
-                        ) : null}
+                      {/* Column 3: Balance */}
+                      <div className="col-span-2 flex items-center justify-end border-l border-gray-100 bg-gray-50/10 p-3 pr-5">
+                        <span className="text-xs font-bold text-slate-600">
+                          {tx.runningBalance !== undefined ? formatAmount(tx.runningBalance) : "-"}
+                        </span>
                       </div>
                     </div>
                   );

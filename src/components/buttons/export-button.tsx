@@ -16,6 +16,7 @@ import {
   XCircle,
   CheckCircle,
   AlertCircle,
+  Printer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -329,11 +330,10 @@ export function ExportButton({ bookId, businessId, token }: ExportButtonProps) {
         <DropdownMenuTrigger asChild>
           <Button 
             variant="outline" 
-            className="flex items-center gap-2 border-primary text-primary hover:bg-primary/10 w-full sm:w-auto text-sm px-4 py-2 h-10"
+            className="flex items-center gap-2 border-[#3b82f6] bg-[#f0f4ff] hover:bg-[#e0ebff] text-[#3b82f6] w-full sm:w-auto text-xs px-5 py-2 h-9 font-semibold rounded-full shadow-sm transition-colors cursor-pointer"
           >
-            <Download className="h-4 w-4" />
-            <span>Reports</span>
-            <ChevronDown className="h-4 w-4" />
+            <Printer className="h-4 w-4 text-[#3b82f6]" />
+            <span>View report</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center" className="w-64">

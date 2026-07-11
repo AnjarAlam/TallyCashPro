@@ -237,7 +237,7 @@ export function DashboardSidebar() {
   return (
     <Sidebar
       variant="sidebar"
-      collapsible="icon"
+      collapsible="offcanvas"
       side="left"
       className="border-r border-slate-900/50"
       style={{
@@ -250,62 +250,42 @@ export function DashboardSidebar() {
     >
       <SidebarHeader className="p-3.5 pb-2 bg-transparent border-0">
         {/* TallyCashPro Logo and Notification Bell block */}
-        {(state === 'expanded' || isMobile) ? (
-          <div className="flex items-center justify-between gap-2.5 px-1 py-1.5">
-            <Link href="/dashboard" className="flex items-center gap-2.5 hover:opacity-85 transition-opacity cursor-pointer">
-              <img src="/logo.png" alt="Logo" className="h-7 w-auto object-contain shrink-0" />
-              <span className="text-[17px] font-bold tracking-tight text-white font-sans truncate">
-                TallyCash<span className="text-[#10b981]">Pro</span>
-              </span>
-            </Link>
-            <div className="text-white/60 hover:text-white transition-colors duration-200">
-              <NotificationBell />
-            </div>
+        <div className="flex items-center justify-between gap-2.5 px-1 py-1.5">
+          <Link href="/dashboard" className="flex items-center gap-2.5 hover:opacity-85 transition-opacity cursor-pointer">
+            <img src="/logo.png" alt="Logo" className="h-7 w-auto object-contain shrink-0" />
+            <span className="text-[17px] font-bold tracking-tight text-white font-sans truncate">
+              TallyCash<span className="text-[#10b981]">Pro</span>
+            </span>
+          </Link>
+          <div className="text-white/60 hover:text-white transition-colors duration-200">
+            <NotificationBell />
           </div>
-        ) : (
-          <div className="flex flex-col items-center gap-3 py-1.5">
-            <Link href="/dashboard" title="TallyCash Pro Overview" className="hover:opacity-85 transition-opacity cursor-pointer">
-              <img src="/logo.png" alt="Logo" className="h-7 w-auto object-contain shrink-0" />
-            </Link>
-            <div className="text-white/60 hover:text-white transition-colors duration-200">
-              <NotificationBell />
-            </div>
-          </div>
-        )}
+        </div>
 
         {/* Business Selector capsule */}
         <div className="mt-3 px-0.5 w-full flex justify-center">
           <DropdownMenu onOpenChange={(open) => { if (!open) setBusinessSearchQuery(""); }}>
             <DropdownMenuTrigger asChild>
-              {(state === "expanded" || isMobile) ? (
-                <button
-                  className="w-full flex items-center justify-between bg-white hover:bg-slate-50 transition-all duration-200 cursor-pointer rounded-full p-1 pl-1.5 pr-3 shadow-md h-[46px] border border-slate-200 outline-none"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-[#3b82f6] text-white font-bold shrink-0 text-xs uppercase animate-scale-in">
-                      {getInitials(business.businessInfo.name) || "B"}
-                    </div>
-                    <div className="flex flex-col text-left min-w-0">
-                      <span className="font-bold text-[12px] text-slate-800 truncate block leading-tight">
-                        {business.businessInfo.name || "Select Business"}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-medium truncate block mt-0.5">
-                        {isCashbookListPending ? "Loading..." : `${cashbookList?.length || 0} Books`}
-                      </span>
-                    </div>
+              <button
+                className="w-full flex items-center justify-between bg-white hover:bg-slate-50 transition-all duration-200 cursor-pointer rounded-full p-1 pl-1.5 pr-3 shadow-md h-[46px] border border-slate-200 outline-none"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-[#3b82f6] text-white font-bold shrink-0 text-xs uppercase animate-scale-in">
+                    {getInitials(business.businessInfo.name) || "B"}
                   </div>
-                  <ChevronDown className="size-3.5 text-slate-500 shrink-0" />
-                </button>
-              ) : (
-                <button
-                  title={business.businessInfo.name || "Select Business"}
-                  className="flex aspect-square size-10 items-center justify-center rounded-full bg-white border border-slate-200 hover:bg-slate-50 shadow-md text-slate-800 font-bold text-sm uppercase shrink-0 transition-all duration-200 cursor-pointer outline-none"
-                >
-                  {getInitials(business.businessInfo.name) || "B"}
-                </button>
-              )}
+                  <div className="flex flex-col text-left min-w-0">
+                    <span className="font-bold text-[12px] text-slate-800 truncate block leading-tight">
+                      {business.businessInfo.name || "Select Business"}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-medium truncate block mt-0.5">
+                      {isCashbookListPending ? "Loading..." : `${cashbookList?.length || 0} Books`}
+                    </span>
+                  </div>
+                </div>
+                <ChevronDown className="size-3.5 text-slate-500 shrink-0" />
+              </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[218px] max-h-[380px] overflow-y-auto rounded-2xl p-1.5 shadow-2xl bg-white z-[10000]" align={state === "expanded" || isMobile ? "start" : "center"} side={state === "expanded" || isMobile ? "bottom" : "right"} sideOffset={8}>
+            <DropdownMenuContent className="w-[218px] max-h-[380px] overflow-y-auto rounded-2xl p-1.5 shadow-2xl bg-white z-[10000]" align="start" side="bottom" sideOffset={8}>
               {/* Search Input */}
               <div className="px-2 py-1.5">
                 <input
@@ -423,7 +403,7 @@ export function DashboardSidebar() {
                     >
                       <Link href={item.url} onClick={handleLinkClick} title={item.title} className="flex items-center gap-2.5">
                         <item.icon className={`size-[18px] ${isActive ? 'text-white' : 'text-white/60'}`} />
-                        {(state === "expanded" || isMobile) && <span className="text-[13px]">{item.title}</span>}
+                        <span className="text-[13px]">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -436,134 +416,71 @@ export function DashboardSidebar() {
 
       {/* User profile footer matching the image, wrapped in DropdownMenu */}
       <SidebarFooter className="border-t border-white/5 p-3 bg-transparent">
-        {(state === "expanded" || isMobile) ? (
-          <div className="flex items-center gap-2 w-full">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex-1 flex items-center gap-2.5 text-left hover:bg-white/5 p-1.5 rounded-xl transition-all duration-200 outline-none border-0 cursor-pointer min-w-0">
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-[#3b82f6] text-white font-extrabold shrink-0 text-xs uppercase animate-scale-in">
-                    {getInitials(user?.name || user?.displayName) || "U"}
-                  </div>
-                  <div className="flex flex-col text-left min-w-0 animate-fade-in">
-                    <span className="font-semibold text-xs text-white truncate block leading-tight">
-                      {user ? (user.name || user.displayName || "User") : "Guest"}
-                    </span>
-                    <span className="text-[9px] text-white/40 truncate block mt-0.5">
-                      {user?.email || ""}
-                    </span>
-                  </div>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-52 mb-2 bg-[#0B1320] border border-white/10 text-white rounded-xl shadow-xl p-1.5 z-[10000]" align="start" side="top">
-                <DropdownMenuLabel className="font-normal px-2.5 py-2">
-                  <div className="flex flex-col space-y-0.5">
-                    <p className="text-xs font-bold text-white leading-none">
-                      {user ? (user.name || user.displayName || "User") : "Guest"}
-                    </p>
-                    {user?.email && (
-                      <p className="text-[10px] text-white/40 truncate leading-none mt-1">
-                        {user.email}
-                      </p>
-                    )}
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-white/5 my-1" />
-                <DropdownMenuItem asChild className="text-xs font-medium focus:bg-white/10 focus:text-white rounded-lg cursor-pointer px-2.5 py-2">
-                  <Link href="/dashboard/settings">Settings</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="text-xs font-medium focus:bg-white/10 focus:text-white rounded-lg cursor-pointer px-2.5 py-2">
-                  <Link href="/dashboard/profile">Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setShowLogoutConfirm(true)}
-                  className="text-xs font-medium focus:bg-white/10 focus:text-white rounded-lg cursor-pointer px-2.5 py-2"
-                >
-                  Log out
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-white/5 my-1" />
-                <DeleteAccountDialog
-                  trigger={
-                    <DropdownMenuItem
-                      className="text-xs font-medium text-red-400 focus:bg-red-500/20 focus:text-red-300 rounded-lg cursor-pointer px-2.5 py-2"
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      Delete Account
-                    </DropdownMenuItem>
-                  }
-                />
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {!isMobile && (
-              <button
-                onClick={toggleSidebar}
-                title="Collapse Sidebar"
-                className="size-8 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all cursor-pointer border-0 outline-none shrink-0"
-              >
-                <ChevronsLeft className="size-4" />
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-2.5 w-full">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  title={user ? (user.name || user.displayName || "User") : "Guest"}
-                  className="flex aspect-square size-8 items-center justify-center rounded-full bg-[#3b82f6] text-white font-extrabold shrink-0 text-xs uppercase hover:ring-2 hover:ring-white/20 transition-all outline-none border-0 cursor-pointer"
-                >
+        <div className="flex items-center gap-2 w-full">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex-1 flex items-center gap-2.5 text-left hover:bg-white/5 p-1.5 rounded-xl transition-all duration-200 outline-none border-0 cursor-pointer min-w-0">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-[#3b82f6] text-white font-extrabold shrink-0 text-xs uppercase animate-scale-in">
                   {getInitials(user?.name || user?.displayName) || "U"}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-52 bg-[#0B1320] border border-white/10 text-white rounded-xl shadow-xl p-1.5 z-[10000]" align="start" side="right" sideOffset={12}>
-                <DropdownMenuLabel className="font-normal px-2.5 py-2">
-                  <div className="flex flex-col space-y-0.5">
-                    <p className="text-xs font-bold text-white leading-none">
-                      {user ? (user.name || user.displayName || "User") : "Guest"}
+                </div>
+                <div className="flex flex-col text-left min-w-0 animate-fade-in">
+                  <span className="font-semibold text-xs text-white truncate block leading-tight">
+                    {user ? (user.name || user.displayName || "User") : "Guest"}
+                  </span>
+                  <span className="text-[9px] text-white/40 truncate block mt-0.5">
+                    {user?.email || ""}
+                  </span>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-52 mb-2 bg-[#0B1320] border border-white/10 text-white rounded-xl shadow-xl p-1.5 z-[10000]" align="start" side="top">
+              <DropdownMenuLabel className="font-normal px-2.5 py-2">
+                <div className="flex flex-col space-y-0.5">
+                  <p className="text-xs font-bold text-white leading-none">
+                    {user ? (user.name || user.displayName || "User") : "Guest"}
+                  </p>
+                  {user?.email && (
+                    <p className="text-[10px] text-white/40 truncate leading-none mt-1">
+                      {user.email}
                     </p>
-                    {user?.email && (
-                      <p className="text-[10px] text-white/40 truncate leading-none mt-1">
-                        {user.email}
-                      </p>
-                    )}
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-white/5 my-1" />
-                <DropdownMenuItem asChild className="text-xs font-medium focus:bg-white/10 focus:text-white rounded-lg cursor-pointer px-2.5 py-2">
-                  <Link href="/dashboard/settings">Settings</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="text-xs font-medium focus:bg-white/10 focus:text-white rounded-lg cursor-pointer px-2.5 py-2">
-                  <Link href="/dashboard/profile">Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setShowLogoutConfirm(true)}
-                  className="text-xs font-medium focus:bg-white/10 focus:text-white rounded-lg cursor-pointer px-2.5 py-2"
-                >
-                  Log out
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-white/5 my-1" />
-                <DeleteAccountDialog
-                  trigger={
-                    <DropdownMenuItem
-                      className="text-xs font-medium text-red-400 focus:bg-red-500/20 focus:text-red-300 rounded-lg cursor-pointer px-2.5 py-2"
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      Delete Account
-                    </DropdownMenuItem>
-                  }
-                />
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  )}
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-white/5 my-1" />
+              <DropdownMenuItem asChild className="text-xs font-medium focus:bg-white/10 focus:text-white rounded-lg cursor-pointer px-2.5 py-2">
+                <Link href="/dashboard/settings">Settings</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="text-xs font-medium focus:bg-white/10 focus:text-white rounded-lg cursor-pointer px-2.5 py-2">
+                <Link href="/dashboard/profile">Profile</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setShowLogoutConfirm(true)}
+                className="text-xs font-medium focus:bg-white/10 focus:text-white rounded-lg cursor-pointer px-2.5 py-2"
+              >
+                Log out
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-white/5 my-1" />
+              <DeleteAccountDialog
+                trigger={
+                  <DropdownMenuItem
+                    className="text-xs font-medium text-red-400 focus:bg-red-500/20 focus:text-red-300 rounded-lg cursor-pointer px-2.5 py-2"
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    Delete Account
+                  </DropdownMenuItem>
+                }
+              />
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-            <button
-              onClick={toggleSidebar}
-              title="Expand Sidebar"
-              className="size-8 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all cursor-pointer border-0 outline-none shrink-0"
-            >
-              <ChevronsRight className="size-4" />
-            </button>
-          </div>
-        )}
+          <button
+            onClick={() => setShowLogoutConfirm(true)}
+            title="Log Out"
+            className="size-8 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all cursor-pointer border-0 outline-none shrink-0"
+          >
+            <LogOut className="size-4" />
+          </button>
+        </div>
       </SidebarFooter>
       <SidebarRail />
 
