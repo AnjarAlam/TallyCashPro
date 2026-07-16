@@ -42,6 +42,9 @@ export const useCreateCashbook = () => {
                 exact: false
             });
             toast.success(res.message);
+            if (typeof window !== "undefined") {
+                window.location.reload();
+            }
         },
         onError: (error) => {
             toast.error(error.message || "Failed to create cashbook");
@@ -79,6 +82,9 @@ export const useUpdateCashbook = () => {
                 exact: false
             });
             toast.success(res.message);
+            if (typeof window !== "undefined") {
+                window.location.reload();
+            }
         },
         onError: (error) => {
             toast.error(error.message || "Failed to Update cashbook");
@@ -243,6 +249,9 @@ export const useSoftDeleteCashbook = () => {
         },
         onSuccess: (_res, { companyId }) => {
             invalidateCashbookListQueries(queryClient, companyId);
+            if (typeof window !== "undefined") {
+                window.location.reload();
+            }
         },
     });
 
@@ -275,6 +284,9 @@ export const useHardDeleteCashbook = () => {
         },
         onSuccess: (_res, { companyId }) => {
             invalidateCashbookListQueries(queryClient, companyId);
+            if (typeof window !== "undefined") {
+                window.location.reload();
+            }
         },
     });
 
@@ -338,6 +350,9 @@ export const useRestoreCashbook = () => {
         onSuccess: (res, { companyId }) => {
             invalidateCashbookListQueries(queryClient, companyId);
             toast.success(res.message || "Book restored successfully");
+            if (typeof window !== "undefined") {
+                window.location.reload();
+            }
         },
         onError: (err) => {
             toast.error(err.message || "Failed to restore book");
@@ -507,6 +522,9 @@ export const useTransferCashbook = () => {
         exact: false
       });
       toast.success(res.message || "Cashbook transferred successfully");
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      }
     },
     onError: (error) => {
       console.error("Transfer API error:", {

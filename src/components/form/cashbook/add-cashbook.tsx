@@ -29,6 +29,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCreateCashbook } from "@/services";
+import { X } from "lucide-react";
+
 
 enum Currency {
   USD = "USD",
@@ -71,11 +73,13 @@ const formSchema = z.object({
 interface CashbookFormProps {
   onClose: () => void;
   businessId: string;
+  showHeader?: boolean;
 }
 
 export default function AddCashbookForm({
   onClose,
   businessId,
+  showHeader = true,
 }: CashbookFormProps) {
   const {
     createCashbook,
@@ -108,25 +112,36 @@ export default function AddCashbookForm({
   }
 
   return (
-    <Card className="w-full mx-auto border-none shadow-none rounded-none flex flex-col h-full">
-      <CardHeader>
-        <CardTitle className="text-2xl">Create Book</CardTitle>
-        <CardDescription>
-          Set up a new book for your business transactions.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex-1">
+    <Card className="w-full mx-auto border-none shadow-none rounded-none flex flex-col h-full bg-transparent">
+      {showHeader && (
+        <CardHeader className="relative pr-12 pb-4">
+          <CardTitle className="text-lg font-bold text-gray-900">Create Book</CardTitle>
+          <CardDescription className="text-xs text-gray-500 mt-1">
+            Set up a new book for your business transactions.
+          </CardDescription>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute right-4 top-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-500 cursor-pointer transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </CardHeader>
+      )}
+      <CardContent className={`flex-1 ${showHeader ? "" : "p-0"}`}>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             {!businessId && (
               <FormField
                 control={form.control}
                 name="companyId"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
+                    <div className="space-y-2 border border-slate-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all duration-200 bg-white p-3.5 rounded-xl shadow-sm">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-md bg-gray-100">
+                        <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="16"
@@ -144,14 +159,14 @@ export default function AddCashbookForm({
                             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                           </svg>
                         </div>
-                        <FormLabel className="text-sm font-medium text-gray-700 flex-1">
+                        <FormLabel className="text-sm font-semibold text-slate-700 flex-1">
                           Business ID *
                         </FormLabel>
                       </div>
                       <FormControl>
                         <Input
                           placeholder="Enter business ID"
-                          className="border-gray-300 focus-visible:ring-1 focus-visible:ring-gray-400"
+                          className="border-slate-200 focus-visible:ring-blue-500 focus-visible:ring-offset-0 focus-visible:ring-1 rounded-lg h-10 text-sm font-medium"
                           {...field}
                         />
                       </FormControl>
@@ -167,9 +182,9 @@ export default function AddCashbookForm({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
+                  <div className="space-y-2 border border-slate-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all duration-200 bg-white p-3.5 rounded-xl shadow-sm">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-md bg-gray-100">
+                      <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="16"
@@ -185,14 +200,14 @@ export default function AddCashbookForm({
                           <polyline points="9 22 9 12 15 12 15 22"></polyline>
                         </svg>
                       </div>
-                      <FormLabel className="text-sm font-medium text-gray-700 flex-1">
+                      <FormLabel className="text-sm font-semibold text-slate-700 flex-1">
                         Book Name *
                       </FormLabel>
                     </div>
                     <FormControl>
                       <Input
                         placeholder="e.g., Main Book"
-                        className="border-gray-300 focus-visible:ring-1 focus-visible:ring-gray-400"
+                        className="border-slate-200 focus-visible:ring-blue-500 focus-visible:ring-offset-0 focus-visible:ring-1 rounded-lg h-10 text-sm font-medium"
                         {...field}
                       />
                     </FormControl>
@@ -207,9 +222,9 @@ export default function AddCashbookForm({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
+                  <div className="space-y-2 border border-slate-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all duration-200 bg-white p-3.5 rounded-xl shadow-sm">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-md bg-gray-100">
+                      <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="16"
@@ -228,14 +243,14 @@ export default function AddCashbookForm({
                           <polyline points="10 9 9 9 8 9"></polyline>
                         </svg>
                       </div>
-                      <FormLabel className="text-sm font-medium text-gray-700 flex-1">
+                      <FormLabel className="text-sm font-semibold text-slate-700 flex-1">
                         Description (Optional)
                       </FormLabel>
                     </div>
                     <FormControl>
                       <Textarea
                         placeholder="Describe the purpose of this Book..."
-                        className="border-gray-300 focus-visible:ring-1 focus-visible:ring-gray-400 min-h-[100px]"
+                        className="border-slate-200 focus-visible:ring-blue-500 focus-visible:ring-offset-0 focus-visible:ring-1 rounded-lg min-h-[100px] text-sm font-medium"
                         {...field}
                       />
                     </FormControl>
@@ -250,9 +265,9 @@ export default function AddCashbookForm({
               name="currency"
               render={({ field }) => (
                 <FormItem>
-                  <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
+                  <div className="space-y-2 border border-slate-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all duration-200 bg-white p-3.5 rounded-xl shadow-sm">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-md bg-gray-100">
+                      <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="16"
@@ -268,7 +283,7 @@ export default function AddCashbookForm({
                           <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                         </svg>
                       </div>
-                      <FormLabel className="text-sm font-medium text-gray-700 flex-1">
+                      <FormLabel className="text-sm font-semibold text-slate-700 flex-1">
                         Currency *
                       </FormLabel>
                     </div>
@@ -277,10 +292,10 @@ export default function AddCashbookForm({
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
-                        <SelectTrigger className="border-gray-300 focus:ring-1 focus:ring-gray-400">
+                        <SelectTrigger className="border-slate-200 focus:ring-blue-500 focus:ring-offset-0 focus:ring-1 rounded-lg h-10 text-sm font-medium bg-white">
                           <SelectValue placeholder="Select a currency" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white border-slate-200 shadow-lg z-[99999]">
                           {Object.values(Currency).map((currency) => (
                             <SelectItem key={currency} value={currency}>
                               {currency}
@@ -294,13 +309,13 @@ export default function AddCashbookForm({
                 </FormItem>
               )}
             />
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end space-x-3 pt-3">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
                 disabled={isCreatingCashbook}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl px-5 h-10 font-semibold"
               >
                 Cancel
               </Button>
@@ -308,7 +323,7 @@ export default function AddCashbookForm({
                 type="submit"
                 disabled={isCreatingCashbook}
                 onClick={form.handleSubmit(onSubmit)}
-                className="bg-gray-900 hover:bg-gray-800"
+                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 h-10 font-semibold shadow-sm transition-colors"
               >
                 {isCreatingCashbook ? "Creating..." : "Create Book"}
               </Button>

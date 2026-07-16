@@ -20,7 +20,10 @@ import {
   Activity,
   BarChart,
   User,
-  HelpCircle
+  HelpCircle,
+  Wrench,
+  Printer,
+  UserCog
 } from "lucide-react";
 import {
   Sidebar,
@@ -61,6 +64,8 @@ import { useGetCompanyList } from "@/services";
 import { useGetCashbookList } from "@/services/cashbook.service";
 import { DeleteAccountDialog } from "@/components/settings/delete-account-dialog";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { CreateBusinessForm } from "@/components/form";
 
 // Helper component to render business list items with dynamic books count
 function BusinessDropdownItem({
@@ -115,8 +120,9 @@ export function DashboardSidebar() {
   const business = useBusiness();
   const { user, logout } = useAuth();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showCreateBusiness, setShowCreateBusiness] = useState(false);
   const [businessSearchQuery, setBusinessSearchQuery] = useState("");
-  const { state, toggleSidebar, isMobile } = useSidebar();
+  const { state, toggleSidebar, isMobile, setOpenMobile } = useSidebar();
   const { companyList: businesses, isCompanyListPending } = useGetCompanyList();
 
   // Fetch cashbooks for active business to display correct book count
@@ -126,24 +132,10 @@ export function DashboardSidebar() {
 
   // Close sidebar on pathname change
   useEffect(() => {
-    const closeSidebar = () => {
-      if (typeof window !== "undefined" && window.innerWidth < 768) {
-        const closeButton = document.querySelector(
-          '[data-sidebar="trigger"]'
-        ) as HTMLElement | null;
-
-        const sidebar = document.querySelector(
-          '[data-sidebar="sidebar"]'
-        ) as HTMLElement | null;
-
-        if (sidebar && sidebar.classList.contains("sidebar-open")) {
-          closeButton?.click();
-        }
-      }
-    };
-
-    closeSidebar();
-  }, [pathname]);
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  }, [pathname, isMobile, setOpenMobile]);
 
   const handleBusinessChange = (selectedBusiness: any) => {
     business.updateBusinessInfo({
@@ -159,7 +151,6 @@ export function DashboardSidebar() {
       description: selectedBusiness.description,
     }));
 
-    // Redirect to the equivalent subpage for the newly selected business only if we are on a business-specific route
     if (pathname.startsWith('/dashboard/business/')) {
       const segments = pathname.split('/');
       if (segments.length > 3) {
@@ -167,23 +158,27 @@ export function DashboardSidebar() {
         router.push(segments.join('/'));
       }
     }
+
+    if (isMobile) {
+      setOpenMobile(false);
+    }
   };
 
   const newConfig = [...sidebarNavConfig,
   {
-    title: "Books",
+    title: "Overview",
     url: `/dashboard/business/${business.businessInfo.id}/book`,
     icon: Book,
   },
   {
     title: "Team Management",
     url: `/dashboard/team-management`,
-    icon: Users,
+    icon: UserCog,
   },
   {
     title: "Reports",
     url: `/dashboard/report`,
-    icon: BarChart,
+    icon: Printer,
   },
   {
     title: "Activity Logs",
@@ -191,7 +186,12 @@ export function DashboardSidebar() {
     icon: Activity,
   },
   {
-    title: "Help & FAQ",
+    title: "Business Settings",
+    url: `/dashboard/business/${business.businessInfo.id}/settings`,
+    icon: Wrench,
+  },
+  {
+    title: "FAQ's",
     url: `/dashboard/help`,
     icon: HelpCircle,
   },
@@ -212,17 +212,8 @@ export function DashboardSidebar() {
 
   // Direct click handler for mobile
   const handleLinkClick = () => {
-    if (typeof window !== "undefined" && window.innerWidth < 768) {
-      const trigger = document.querySelector('[data-sidebar="trigger"]') as HTMLButtonElement;
-      if (trigger) {
-        trigger.click();
-      }
-
-      const openSidebar = document.querySelector('[data-state="open"][data-sidebar="sidebar"]');
-      if (openSidebar) {
-        const closeBtn = openSidebar.querySelector('[data-sidebar="trigger"]') as HTMLButtonElement;
-        closeBtn?.click();
-      }
+    if (isMobile) {
+      setOpenMobile(false);
     }
   };
 
@@ -235,7 +226,8 @@ export function DashboardSidebar() {
   };
 
   return (
-    <Sidebar
+    <>
+      <Sidebar
       variant="sidebar"
       collapsible="offcanvas"
       side="left"
@@ -251,13 +243,13 @@ export function DashboardSidebar() {
       <SidebarHeader className="p-3.5 pb-2 bg-transparent border-0">
         {/* TallyCashPro Logo and Notification Bell block */}
         <div className="flex items-center justify-between gap-2.5 px-1 py-1.5">
-          <Link href="/dashboard" className="flex items-center gap-2.5 hover:opacity-85 transition-opacity cursor-pointer">
+          <Link href={`/dashboard/business/${business.businessInfo.id}/book`} className="flex items-center gap-2.5 hover:opacity-85 transition-opacity cursor-pointer">
             <img src="/logo.png" alt="Logo" className="h-7 w-auto object-contain shrink-0" />
             <span className="text-[17px] font-bold tracking-tight text-white font-sans truncate">
               TallyCash<span className="text-[#10b981]">Pro</span>
             </span>
           </Link>
-          <div className="text-white/60 hover:text-white transition-colors duration-200">
+          <div className="text-white/60 hover:text-white transition-colors duration-200 hidden md:block">
             <NotificationBell />
           </div>
         </div>
@@ -331,7 +323,7 @@ export function DashboardSidebar() {
                             />
                           );
                         })}
-                        
+
                         {businesses.length > 5 && (
                           <div className="px-1 py-1 border-t border-slate-100 mt-1">
                             <DropdownMenuItem
@@ -353,7 +345,13 @@ export function DashboardSidebar() {
               <DropdownMenuSeparator className="bg-slate-100 my-1" />
               <div className="p-2 pt-1">
                 <DropdownMenuItem
-                  onClick={() => router.push('/dashboard/business')}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setShowCreateBusiness(true);
+                    if (isMobile) {
+                      setOpenMobile(false);
+                    }
+                  }}
                   className="w-full flex items-center justify-center gap-1.5 bg-[#3b82f6] hover:bg-[#2563eb] text-white font-semibold text-xs rounded-full py-2 px-3 shadow-sm transition-colors cursor-pointer border-0 outline-none focus:bg-[#2563eb] focus:text-white"
                 >
                   <span>New Business</span>
@@ -372,7 +370,7 @@ export function DashboardSidebar() {
               {newConfig.map((item) => {
                 const isActive = (() => {
                   if (pathname.includes('/book')) {
-                    return item.title === 'Books';
+                    return item.title === 'Overview';
                   }
                   if (pathname.includes('/activity')) {
                     return item.title === 'Activity Logs';
@@ -381,7 +379,10 @@ export function DashboardSidebar() {
                     return item.title === 'Reports';
                   }
                   if (pathname.includes('/help')) {
-                    return item.title === 'Help & FAQ';
+                    return item.title === "FAQ's";
+                  }
+                  if (pathname.includes('/settings')) {
+                    return item.title === 'Business Settings';
                   }
                   if (pathname.includes('/team-management')) {
                     return item.title === 'Team Management';
@@ -448,10 +449,10 @@ export function DashboardSidebar() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-white/5 my-1" />
               <DropdownMenuItem asChild className="text-xs font-medium focus:bg-white/10 focus:text-white rounded-lg cursor-pointer px-2.5 py-2">
-                <Link href="/dashboard/settings">Settings</Link>
+                <Link href="/dashboard/settings" onClick={handleLinkClick}>Settings</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="text-xs font-medium focus:bg-white/10 focus:text-white rounded-lg cursor-pointer px-2.5 py-2">
-                <Link href="/dashboard/profile">Profile</Link>
+                <Link href="/dashboard/profile" onClick={handleLinkClick}>Profile</Link>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setShowLogoutConfirm(true)}
@@ -483,8 +484,9 @@ export function DashboardSidebar() {
         </div>
       </SidebarFooter>
       <SidebarRail />
+    </Sidebar>
 
-      <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+    <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
         <AlertDialogContent
           className="
             max-w-[320px]
@@ -566,6 +568,13 @@ export function DashboardSidebar() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Sidebar>
+
+      <Dialog open={showCreateBusiness} onOpenChange={setShowCreateBusiness}>
+        <DialogContent className="w-[92%] sm:min-w-[536px] max-h-[90vh] overflow-y-auto p-5 bg-white rounded-2xl border border-slate-200/50 shadow-2xl scrollbar-none">
+          <DialogTitle className="sr-only">Add New Business</DialogTitle>
+          <CreateBusinessForm onClose={() => setShowCreateBusiness(false)} />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

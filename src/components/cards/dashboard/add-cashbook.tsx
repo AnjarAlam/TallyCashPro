@@ -50,6 +50,7 @@ export default function AddCashbookCard({
         {/* <SheetDescription> */}
         <AddCashbookForm
           businessId={businessId}
+          showHeader={false}
           onClose={() => setOpen(false)}
         />
         {/* </SheetDescription> */}

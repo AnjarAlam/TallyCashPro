@@ -16,6 +16,7 @@ export default function BusinessSettingsPage({
       headerTitle="Business Settings"
       showPreviousPage
       showTitle
+      titleClassName="text-sm md:text-base font-bold"
     >
       <BusinessSettingsScreen businessId={businessId} />
     </DashboardSubLayout>

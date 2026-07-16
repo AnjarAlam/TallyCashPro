@@ -41,6 +41,9 @@ export const useCreateTransaction = () => {
         exact: false,
       });
       toast.success(res.message);
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      }
     },
     onError: (error) => {
       toast.error(error.message || "Failed to create transaction");
@@ -300,6 +303,9 @@ export const useVerifyTransaction = () => {
           ? `${count} transaction${count === 1 ? "" : "s"} verified`
           : res.message || "Transactions verified"
       );
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      }
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to verify transactions");
@@ -350,6 +356,9 @@ export const useUpdateTransaction = () => {
         exact: false,
       });
       toast.success(res.message || "Transaction updated successfully");
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      }
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update transaction");
@@ -418,6 +427,9 @@ export const useDeleteTransaction = () => {
     },
     onSuccess: (res) => {
       invalidateTransactionQueries(queryClient);
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      }
     },
     onError: (err: Error) => {
       console.error("Transaction soft delete failed:", err.message);
@@ -454,6 +466,9 @@ export const useHardDeleteTransaction = () => {
     },
     onSuccess: (_res, { bookId }) => {
       invalidateTransactionQueries(queryClient, bookId);
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      }
     },
     onError: (err: Error) => {
       console.error("Permanent transaction delete failed:", err.message);
@@ -490,6 +505,9 @@ export const useRestoreTransaction = () => {
     onSuccess: (res, { bookId }) => {
       invalidateTransactionQueries(queryClient, bookId);
       toast.success(res.message || "Transaction restored successfully");
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      }
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to restore transaction");

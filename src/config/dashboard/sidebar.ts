@@ -3,16 +3,16 @@ import { BarChart, Book, LayoutDashboard, Users } from "lucide-react";
 
 // Define your menu items with their URLs
 export const mainNavigationItems = [
-    {
-        title: "Overview",
-        url: paths.dashboard.root,
-        icon: LayoutDashboard,
-    },
-    {
-        title: "Businesses",
-        url: paths.dashboard.business.root,
-        icon: Users,
-    },
+    // {
+    //     title: "Overview",
+    //     url: paths.dashboard.root,
+    //     icon: LayoutDashboard,
+    // },
+    // {
+    //     title: "Businesses",
+    //     url: paths.dashboard.business.root,
+    //     icon: Users,
+    // },
     // {
     //     title: "Books",
     //     url: paths.dashboard.business.book,

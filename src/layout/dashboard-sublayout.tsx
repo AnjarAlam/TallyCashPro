@@ -11,6 +11,7 @@ export default function DashboardSubLayout({
   showTitle = true,
   headerTitlePosition,
   aside, // New prop for the aside content
+  titleClassName,
 }: {
   children: React.ReactNode;
   headerTitle?: string;
@@ -19,6 +20,7 @@ export default function DashboardSubLayout({
   showTitle?: boolean;
   compList?: compConfigProps;
   aside?: React.ReactNode; // Define the type for the new prop
+  titleClassName?: string;
 }) {
   return (
     <section className="relative ">
@@ -28,6 +30,7 @@ export default function DashboardSubLayout({
             showPreviousPage={showPreviousPage}
             headerTitle={headerTitle}
             headerTitlePosition={headerTitlePosition}
+            titleClassName={titleClassName}
             {...(compList ? { components: compList } : null)}
           />
         </div>

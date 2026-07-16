@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import {
     Search,
@@ -22,7 +22,8 @@ import {
     AlertCircle,
     ChevronDown,
     ChevronUp,
-    Mail
+    Mail,
+    X
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -523,6 +524,103 @@ export default function TeamManagementPage() {
     } | null>(null);
     const [deleteInputValue, setDeleteInputValue] = useState("");
 
+    // Mobile States
+    const [isMobileMemberDetailOpen, setIsMobileMemberDetailOpen] = useState(false);
+    const [isMobileBookMembersOpen, setIsMobileBookMembersOpen] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    // Mobile Back Button Interceptors
+    useEffect(() => {
+        if (typeof window === "undefined" || !isMobile) return;
+
+        const handlePopState = () => {
+            if (isMobileMemberDetailOpen) setIsMobileMemberDetailOpen(false);
+        };
+
+        if (isMobileMemberDetailOpen) {
+            window.history.pushState({ memberDetailOpen: true }, "");
+            window.addEventListener("popstate", handlePopState);
+        }
+        return () => window.removeEventListener("popstate", handlePopState);
+    }, [isMobileMemberDetailOpen, isMobile]);
+
+    useEffect(() => {
+        if (typeof window === "undefined" || !isMobile) return;
+        if (!isMobileMemberDetailOpen && window.history.state?.memberDetailOpen) {
+            window.history.back();
+        }
+    }, [isMobileMemberDetailOpen, isMobile]);
+
+    useEffect(() => {
+        if (typeof window === "undefined" || !isMobile) return;
+
+        const handlePopState = () => {
+            if (isMobileBookMembersOpen) setIsMobileBookMembersOpen(false);
+        };
+
+        if (isMobileBookMembersOpen) {
+            window.history.pushState({ bookMembersOpen: true }, "");
+            window.addEventListener("popstate", handlePopState);
+        }
+        return () => window.removeEventListener("popstate", handlePopState);
+    }, [isMobileBookMembersOpen, isMobile]);
+
+    useEffect(() => {
+        if (typeof window === "undefined" || !isMobile) return;
+        if (!isMobileBookMembersOpen && window.history.state?.bookMembersOpen) {
+            window.history.back();
+        }
+    }, [isMobileBookMembersOpen, isMobile]);
+
+    useEffect(() => {
+        if (typeof window === "undefined" || !isMobile) return;
+
+        const handlePopState = () => {
+            if (showAddBookMemberSheet) setShowAddBookMemberSheet(false);
+        };
+
+        if (showAddBookMemberSheet) {
+            window.history.pushState({ addBookMemberOpen: true }, "");
+            window.addEventListener("popstate", handlePopState);
+        }
+        return () => window.removeEventListener("popstate", handlePopState);
+    }, [showAddBookMemberSheet, isMobile]);
+
+    useEffect(() => {
+        if (typeof window === "undefined" || !isMobile) return;
+        if (!showAddBookMemberSheet && window.history.state?.addBookMemberOpen) {
+            window.history.back();
+        }
+    }, [showAddBookMemberSheet, isMobile]);
+
+    useEffect(() => {
+        if (typeof window === "undefined" || !isMobile) return;
+
+        const handlePopState = () => {
+            if (showAddBusinessMemberSheet) setShowAddBusinessMemberSheet(false);
+        };
+
+        if (showAddBusinessMemberSheet) {
+            window.history.pushState({ addBusinessMemberOpen: true }, "");
+            window.addEventListener("popstate", handlePopState);
+        }
+        return () => window.removeEventListener("popstate", handlePopState);
+    }, [showAddBusinessMemberSheet, isMobile]);
+
+    useEffect(() => {
+        if (typeof window === "undefined" || !isMobile) return;
+        if (!showAddBusinessMemberSheet && window.history.state?.addBusinessMemberOpen) {
+            window.history.back();
+        }
+    }, [showAddBusinessMemberSheet, isMobile]);
+
     // API Call: get all user books
     const { userBooks = [], isUserBooksPending, refetchUserBooks } = useGetUserBooks(
         { companyId },
@@ -783,6 +881,215 @@ export default function TeamManagementPage() {
         );
     };
 
+    const renderBusinessMemberSettings = () => {
+        if (!selectedBusinessMemberId || !selectedBusinessMember) return null;
+        return (
+            <div className="flex-1 flex flex-col p-6 space-y-6 bg-white">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-slate-150 rounded-xl bg-slate-50/30">
+                    <div className="flex items-center gap-4">
+                        <Avatar className="h-12 w-12 bg-blue-50 border border-blue-150 shadow-sm">
+                            <AvatarFallback className="text-blue-600 font-bold text-sm">
+                                {getAvatarInitials(selectedBusinessMember.user?.name || selectedBusinessMember.user?.email)}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                            <h4 className="text-sm font-bold text-slate-800 truncate">
+                                {selectedBusinessMember.user?.name || selectedBusinessMember.user?.email || "Unknown User"}
+                            </h4>
+                            <p className="text-xs text-slate-400 truncate mt-0.5">
+                                {selectedBusinessMember.user?.email}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                            Business Role:
+                        </span>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wide ${getRoleBadge(selectedBusinessMember.companyRole)}`}>
+                            {selectedBusinessMember.companyRole?.toUpperCase()}
+                        </span>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <h4 className="text-xs font-bold text-slate-650 uppercase tracking-wider">
+                        Update Role & Permissions
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Card className="border border-slate-200 shadow-none hover:border-slate-300 transition-all">
+                            <CardContent className="p-4 space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <div className="p-1 bg-slate-100 rounded-md">
+                                        <Shield className="h-4 w-4 text-slate-600" />
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-800">Change Business Role</span>
+                                </div>
+                                <p className="text-[10px] text-slate-400 leading-relaxed">
+                                    Assign Partner or Staff permissions. Note: owners can only be changed by transferring the company ownership.
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={selectedBusinessMember.companyRole === "owner"}
+                                    className="w-full text-[11px] h-8 rounded-lg cursor-pointer flex items-center justify-center gap-1.5"
+                                    onClick={() => handleOpenRoleDialog(
+                                        selectedBusinessMember._id,
+                                        selectedBusinessMember.user?.name || selectedBusinessMember.user?.email,
+                                        selectedBusinessMember.companyRole
+                                    )}
+                                >
+                                    <Edit className="h-3 w-3" />
+                                    Change Role
+                                </Button>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="border border-red-150 bg-red-50/10 shadow-none hover:bg-red-50/20 transition-all">
+                            <CardContent className="p-4 space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <div className="p-1 bg-red-55/10 rounded-md">
+                                        <Trash2 className="h-4 w-4 text-red-550" />
+                                    </div>
+                                    <span className="text-xs font-bold text-red-700">Danger Zone</span>
+                                </div>
+                                <p className="text-[10px] text-red-650/70 leading-relaxed">
+                                    Permanently remove this member from the business space and retract all book permissions.
+                                </p>
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    disabled={selectedBusinessMember.companyRole === "owner"}
+                                    className="w-full text-[11px] h-8 rounded-lg cursor-pointer bg-red-600 hover:bg-red-700 text-white border-none flex items-center justify-center gap-1.5"
+                                    onClick={() => handleRemoveBusinessMember(
+                                        selectedBusinessMember._id,
+                                        selectedBusinessMember.user?.name || selectedBusinessMember.user?.email
+                                    )}
+                                >
+                                    <Trash2 className="h-3 w-3" />
+                                    Remove Member
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const renderBookMembersList = () => {
+        if (!selectedBookId) return null;
+        return (
+            <div className="flex-1 flex flex-col min-h-0 bg-white">
+                {/* Search Bar */}
+                <div className="px-5 py-3 shrink-0">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                        <Input
+                            type="text"
+                            placeholder="Search Members"
+                            value={memberSearch}
+                            onChange={(e) => setMemberSearch(e.target.value)}
+                            className="w-full h-9 pl-9 pr-4 bg-slate-50 border border-slate-200 rounded-lg text-xs focus-visible:ring-1 focus-visible:ring-blue-200 placeholder:text-slate-400"
+                        />
+                    </div>
+                </div>
+
+                {/* Warning/Alert Banner */}
+                <div className="mx-5 mb-3 px-3 py-2.5 bg-orange-50 border border-orange-100 text-orange-700 rounded-lg flex items-center justify-between text-[11px] font-medium shrink-0">
+                    <div className="flex items-center gap-2">
+                        <AlertCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                        <span>Want to know Book Access Level?</span>
+                    </div>
+                    <button
+                        onClick={() => setShowRulesDialog(true)}
+                        className="text-orange-600 hover:text-orange-700 font-bold cursor-pointer shrink-0"
+                    >
+                        Know More
+                    </button>
+                </div>
+
+                <div className="px-5 pb-2 shrink-0">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+                        {filteredMembers.length} Members Found
+                    </span>
+                </div>
+
+                {/* Members Stream */}
+                <div className="flex-1 px-5 space-y-2.5 pb-6 overflow-y-auto min-h-0">
+                    {isBookMembersPending ? (
+                        <div className="flex justify-center items-center py-12">
+                            <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+                        </div>
+                    ) : filteredMembers.length === 0 ? (
+                        <div className="text-center py-12 text-slate-400 text-xs">
+                            No Members found in this book
+                        </div>
+                    ) : (
+                        filteredMembers.map((member: any) => {
+                            const memberName = `${member.firstName || ""} ${member.lastName || ""}`.trim() || member.user?.name || "Unknown User";
+                            const memberEmail = member.email || member.user?.email || "";
+                            const memberRole = member.bookRole || member.role || "viewer";
+
+                            return (
+                                <div
+                                    key={member.id}
+                                    className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl hover:border-slate-200 transition-all gap-4"
+                                >
+                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                        <Avatar className="h-9 w-9 shrink-0 bg-blue-50 border border-blue-100">
+                                            <AvatarFallback className="text-blue-600 font-semibold text-xs flex items-center justify-center">
+                                                {getAvatarInitials(memberName)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="min-w-0 flex-1">
+                                            <span className="text-xs font-semibold text-gray-900 truncate block">
+                                                {memberName}
+                                            </span>
+                                            <p className="text-[10px] text-gray-400 mt-0.5 truncate">
+                                                {memberEmail}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Actions: Inline select and delete button next to each other */}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <Select
+                                            value={memberRole === "data_operator" ? "data_operator" : memberRole}
+                                            onValueChange={(val) => handleBookRoleChange(selectedBookId, member.id, val)}
+                                        >
+                                            <SelectTrigger className={`h-7 px-2.5 rounded-lg border-none text-[10px] font-bold tracking-wide cursor-pointer focus:ring-0 focus:ring-offset-0 shadow-none flex items-center gap-1.5 w-24 justify-between transition-all ${getBookRoleBadge(memberRole)}`}>
+                                                <SelectValue>
+                                                    <span>{getBookRoleLabel(memberRole)}</span>
+                                                </SelectValue>
+                                            </SelectTrigger>
+                                            <SelectContent align="end" className="z-[9999]">
+                                                <SelectItem value="admin">Admin</SelectItem>
+                                                <SelectItem value="data_operator">Editor</SelectItem>
+                                                <SelectItem value="viewer">Viewer</SelectItem>
+                                                <SelectItem value="accountant">Accountant</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-red-500 hover:text-red-650 hover:bg-red-55/10 rounded-lg cursor-pointer transition-all border border-red-100/60 bg-red-55/10 shrink-0"
+                                            onClick={() => handleRemoveMemberFromBook(selectedBookId, member.user?._id || member.user?.id, memberName)}
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <DashboardSubLayout headerTitle="Team Management" showTitle={false}>
             {/* Top Header Section */}
@@ -815,15 +1122,29 @@ export default function TeamManagementPage() {
 
             {activeTab === "business" ? (
                 // BUSINESS TAB LAYOUT (Dual Pane Layout)
-                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row h-[calc(100vh-210px)] min-h-[640px]">
+                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row h-[calc(100dvh-130px)] md:h-[calc(100vh-210px)] min-h-[500px] md:min-h-[640px]">
 
                     {/* Left Column: Business Members list */}
-                    <div className="w-full md:w-[300px] lg:w-[340px] border-r border-slate-200/80 flex flex-col shrink-0 bg-white">
-                        <div className="px-5 py-3.5 border-b border-slate-100">
+                    <div className="w-full md:w-[300px] lg:w-[340px] border-r border-slate-200/80 flex flex-col shrink-0 bg-white min-h-0">
+                        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                             <h3 className="text-sm font-bold text-gray-900">Business Members</h3>
+                            <div className="flex items-center gap-1.5">
+                                <button
+                                    onClick={() => setShowRulesDialog(true)}
+                                    className="md:hidden text-[10px] text-blue-600 hover:text-blue-700 font-bold border border-blue-150 rounded-full px-2.5 py-1 bg-blue-50/50 hover:bg-blue-50 cursor-pointer"
+                                >
+                                    Rules Guide
+                                </button>
+                                <Button
+                                    onClick={() => setShowAddBusinessMemberSheet(true)}
+                                    className="md:hidden bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-full px-3 py-1 text-[10px] font-semibold flex items-center gap-1 shadow-sm h-7 cursor-pointer border-none shrink-0"
+                                >
+                                    Add Member +
+                                </Button>
+                            </div>
                         </div>
 
-                        <div className="px-5 py-3">
+                        <div className="px-5 py-3 shrink-0">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                                 <Input
@@ -836,13 +1157,13 @@ export default function TeamManagementPage() {
                             </div>
                         </div>
 
-                        <div className="px-5 pb-2">
+                        <div className="px-5 pb-2 shrink-0">
                             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
                                 {filteredBusinessMembers.length} Members Found
                             </span>
                         </div>
 
-                        <div className="flex-1 px-3 space-y-0.5 pb-4">
+                        <div className="flex-1 px-3 space-y-0.5 pb-4 overflow-y-auto min-h-0">
                             {isMembersLoading ? (
                                 <div className="flex justify-center items-center py-12">
                                     <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
@@ -861,9 +1182,13 @@ export default function TeamManagementPage() {
                                             if (selectedBusinessMemberId === member._id) {
                                                 setSelectedBusinessMemberId(null);
                                                 setSelectedBusinessMember(null);
+                                                setIsMobileMemberDetailOpen(false);
                                             } else {
                                                 setSelectedBusinessMemberId(member._id);
                                                 setSelectedBusinessMember(member);
+                                                if (isMobile) {
+                                                    setIsMobileMemberDetailOpen(true);
+                                                }
                                             }
                                         }}
                                     />
@@ -873,10 +1198,10 @@ export default function TeamManagementPage() {
                     </div>
 
                     {/* Right Column: Member details & Role configurations */}
-                    <div className="flex-1 flex flex-col bg-slate-50/10 min-w-0">
+                    <div className="hidden md:flex flex-1 flex flex-col bg-slate-50/10 min-w-0">
 
                         {/* Header */}
-                        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-white">
+                        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                             <h3 className="text-sm font-bold text-gray-900">Member Settings</h3>
                             <Button
                                 onClick={() => setShowAddBusinessMemberSheet(true)}
@@ -887,98 +1212,7 @@ export default function TeamManagementPage() {
                         </div>
 
                         {selectedBusinessMemberId && selectedBusinessMember ? (
-                            // Render Member Details card view
-                            <div className="flex-1 flex flex-col p-6 space-y-6 bg-white">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-slate-150 rounded-xl bg-slate-50/30">
-                                    <div className="flex items-center gap-4">
-                                        <Avatar className="h-12 w-12 bg-blue-50 border border-blue-150 shadow-sm">
-                                            <AvatarFallback className="text-blue-600 font-bold text-sm">
-                                                {getAvatarInitials(selectedBusinessMember.user?.name || selectedBusinessMember.user?.email)}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="min-w-0 flex-1">
-                                            <h4 className="text-sm font-bold text-slate-800 truncate">
-                                                {selectedBusinessMember.user?.name || selectedBusinessMember.user?.email || "Unknown User"}
-                                            </h4>
-                                            <p className="text-xs text-slate-400 truncate mt-0.5">
-                                                {selectedBusinessMember.user?.email}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                                            Business Role:
-                                        </span>
-                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wide ${getRoleBadge(selectedBusinessMember.companyRole)}`}>
-                                            {selectedBusinessMember.companyRole?.toUpperCase()}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <h4 className="text-xs font-bold text-slate-650 uppercase tracking-wider">
-                                        Update Role & Permissions
-                                    </h4>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <Card className="border border-slate-200 shadow-none hover:border-slate-300 transition-all">
-                                            <CardContent className="p-4 space-y-3">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="p-1 bg-slate-100 rounded-md">
-                                                        <Shield className="h-4 w-4 text-slate-600" />
-                                                    </div>
-                                                    <span className="text-xs font-bold text-slate-800">Change Business Role</span>
-                                                </div>
-                                                <p className="text-[10px] text-slate-400 leading-relaxed">
-                                                    Assign Partner or Staff permissions. Note: owners can only be changed by transferring the company ownership.
-                                                </p>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    disabled={selectedBusinessMember.companyRole === "owner"}
-                                                    className="w-full text-[11px] h-8 rounded-lg cursor-pointer flex items-center justify-center gap-1.5"
-                                                    onClick={() => handleOpenRoleDialog(
-                                                        selectedBusinessMember._id,
-                                                        selectedBusinessMember.user?.name || selectedBusinessMember.user?.email,
-                                                        selectedBusinessMember.companyRole
-                                                    )}
-                                                >
-                                                    <Edit className="h-3 w-3" />
-                                                    Change Role
-                                                </Button>
-                                            </CardContent>
-                                        </Card>
-
-                                        <Card className="border border-red-150 bg-red-50/10 shadow-none hover:bg-red-50/20 transition-all">
-                                            <CardContent className="p-4 space-y-3">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="p-1 bg-red-50 rounded-md">
-                                                        <Trash2 className="h-4 w-4 text-red-550" />
-                                                    </div>
-                                                    <span className="text-xs font-bold text-red-700">Danger Zone</span>
-                                                </div>
-                                                <p className="text-[10px] text-red-650/70 leading-relaxed">
-                                                    Permanently remove this member from the business space and retract all book permissions.
-                                                </p>
-                                                <Button
-                                                    variant="destructive"
-                                                    size="sm"
-                                                    disabled={selectedBusinessMember.companyRole === "owner"}
-                                                    className="w-full text-[11px] h-8 rounded-lg cursor-pointer bg-red-600 hover:bg-red-700 text-white border-none flex items-center justify-center gap-1.5"
-                                                    onClick={() => handleRemoveBusinessMember(
-                                                        selectedBusinessMember._id,
-                                                        selectedBusinessMember.user?.name || selectedBusinessMember.user?.email
-                                                    )}
-                                                >
-                                                    <Trash2 className="h-3 w-3" />
-                                                    Remove Member
-                                                </Button>
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-                                </div>
-                            </div>
+                            renderBusinessMemberSettings()
                         ) : (
                             // Empty state: No Member Selected notice + Accordions details
                             <div className="flex-1 flex flex-col lg:grid lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-100 min-h-0 bg-white">
@@ -1007,15 +1241,21 @@ export default function TeamManagementPage() {
                 </div>
             ) : (
                 // BOOKS TAB LAYOUT (Dual Pane Layout)
-                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row h-[calc(100vh-210px)] min-h-[640px]">
+                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row h-[calc(100dvh-130px)] md:h-[calc(100vh-210px)] min-h-[500px] md:min-h-[640px]">
 
                     {/* Left Column: Books list */}
-                    <div className="w-full md:w-[300px] lg:w-[340px] border-r border-slate-200/80 flex flex-col shrink-0 bg-white">
-                        <div className="px-5 py-3.5 border-b border-slate-100">
+                    <div className="w-full md:w-[300px] lg:w-[340px] border-r border-slate-200/80 flex flex-col shrink-0 bg-white min-h-0">
+                        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                             <h3 className="text-sm font-bold text-gray-900">Books</h3>
+                            <button
+                                onClick={() => setShowRulesDialog(true)}
+                                className="md:hidden text-[10px] text-purple-650 hover:text-purple-755 font-bold border border-purple-150 rounded-full px-2.5 py-1 bg-purple-50/50 hover:bg-purple-50 cursor-pointer"
+                            >
+                                Rules Guide
+                            </button>
                         </div>
 
-                        <div className="px-5 py-3">
+                        <div className="px-5 py-3 shrink-0">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                                 <Input
@@ -1028,13 +1268,13 @@ export default function TeamManagementPage() {
                             </div>
                         </div>
 
-                        <div className="px-5 pb-2">
+                        <div className="px-5 pb-2 shrink-0">
                             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
                                 {filteredBooks.length} Books Found
                             </span>
                         </div>
 
-                        <div className="flex-1 px-3 space-y-0.5 pb-4">
+                        <div className="flex-1 px-3 space-y-0.5 pb-4 overflow-y-auto min-h-0">
                             {isUserBooksPending ? (
                                 <div className="flex justify-center items-center py-12">
                                     <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
@@ -1054,9 +1294,13 @@ export default function TeamManagementPage() {
                                             if (selectedBookId === id) {
                                                 setSelectedBookId(null);
                                                 setSelectedBookName(null);
+                                                setIsMobileBookMembersOpen(false);
                                             } else {
                                                 setSelectedBookId(id);
                                                 setSelectedBookName(book.name);
+                                                if (isMobile) {
+                                                    setIsMobileBookMembersOpen(true);
+                                                }
                                             }
                                         }}
                                         companyId={companyId}
@@ -1067,10 +1311,10 @@ export default function TeamManagementPage() {
                     </div>
 
                     {/* Right Column: Members list & Role configurations */}
-                    <div className="flex-1 flex flex-col bg-slate-50/10 min-w-0">
+                    <div className="hidden md:flex flex-1 flex flex-col bg-slate-50/10 min-w-0">
 
                         {/* Header */}
-                        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-white">
+                        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                             <h3 className="text-sm font-bold text-gray-900">Members List</h3>
                             <Button
                                 disabled={!selectedBookId}
@@ -1082,129 +1326,20 @@ export default function TeamManagementPage() {
                         </div>
 
                         {selectedBookId ? (
-                            <div className="flex-1 flex flex-col">
-
-                                {/* Search Bar */}
-                                <div className="px-5 py-3">
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                                        <Input
-                                            type="text"
-                                            placeholder="Search Members"
-                                            value={memberSearch}
-                                            onChange={(e) => setMemberSearch(e.target.value)}
-                                            className="w-full h-9 pl-9 pr-4 bg-slate-50 border border-slate-200 rounded-lg text-xs focus-visible:ring-1 focus-visible:ring-blue-200 placeholder:text-slate-400"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Warning/Alert Banner */}
-                                <div className="mx-5 mb-3 px-3 py-2.5 bg-orange-50 border border-orange-100 text-orange-700 rounded-lg flex items-center justify-between text-[11px] font-medium">
-                                    <div className="flex items-center gap-2">
-                                        <AlertCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />
-                                        <span>Want to know Book Access Level?</span>
-                                    </div>
-                                    <button
-                                        onClick={() => setShowRulesDialog(true)}
-                                        className="text-orange-600 hover:text-orange-700 font-bold cursor-pointer shrink-0"
-                                    >
-                                        Know More
-                                    </button>
-                                </div>
-
-                                <div className="px-5 pb-2">
-                                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
-                                        {filteredMembers.length} Members Found
-                                    </span>
-                                </div>
-
-                                {/* Members Stream */}
-                                <div className="flex-1 px-5 space-y-2.5 pb-6">
-                                    {isBookMembersPending ? (
-                                        <div className="flex justify-center items-center py-12">
-                                            <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-                                        </div>
-                                    ) : filteredMembers.length === 0 ? (
-                                        <div className="text-center py-12 text-slate-400 text-xs">
-                                            No Members found in this book
-                                        </div>
-                                    ) : (
-                                        filteredMembers.map((member: any) => {
-                                            const memberName = `${member.firstName || ""} ${member.lastName || ""}`.trim() || member.user?.name || "Unknown User";
-                                            const memberEmail = member.email || member.user?.email || "";
-                                            const memberRole = member.bookRole || member.role || "viewer";
-
-                                            return (
-                                                <div
-                                                    key={member.id}
-                                                    className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl hover:border-slate-200 transition-all gap-4"
-                                                >
-                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                                                        <Avatar className="h-9 w-9 shrink-0 bg-blue-50 border border-blue-100">
-                                                            <AvatarFallback className="text-blue-600 font-semibold text-xs flex items-center justify-center">
-                                                                {getAvatarInitials(memberName)}
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                        <div className="min-w-0 flex-1">
-                                                            <span className="text-xs font-semibold text-gray-900 truncate block">
-                                                                {memberName}
-                                                            </span>
-                                                            <p className="text-[10px] text-gray-400 mt-0.5 truncate">
-                                                                {memberEmail}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Actions: Inline select and delete button next to each other */}
-                                                    <div className="flex items-center gap-2 shrink-0">
-                                                        <Select
-                                                            value={memberRole === "data_operator" ? "data_operator" : memberRole}
-                                                            onValueChange={(val) => handleBookRoleChange(selectedBookId, member.id, val)}
-                                                        >
-                                                            <SelectTrigger className={`h-7 px-2.5 rounded-lg border-none text-[10px] font-bold tracking-wide cursor-pointer focus:ring-0 focus:ring-offset-0 shadow-none flex items-center gap-1.5 w-24 justify-between transition-all ${getBookRoleBadge(memberRole)}`}>
-                                                                <SelectValue>
-                                                                    <span>{getBookRoleLabel(memberRole)}</span>
-                                                                </SelectValue>
-                                                            </SelectTrigger>
-                                                            <SelectContent align="end" className="z-[9999]">
-                                                                <SelectItem value="admin">Admin</SelectItem>
-                                                                <SelectItem value="data_operator">Editor</SelectItem>
-                                                                <SelectItem value="viewer">Viewer</SelectItem>
-                                                                <SelectItem value="accountant">Accountant</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-7 w-7 text-red-500 hover:text-red-650 hover:bg-red-50 rounded-lg cursor-pointer transition-all border border-red-100/60 bg-red-55/10 shrink-0"
-                                                            onClick={() => handleRemoveMemberFromBook(selectedBookId, member.user?._id || member.user?.id, memberName)}
-                                                        >
-                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })
-                                    )}
-                                </div>
-
-                            </div>
+                            renderBookMembersList()
                         ) : (
                             // Split layout empty state: "No Books Selected" message + Accordions details
                             <div className="flex-1 flex flex-col lg:grid lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-100 min-h-0 bg-white">
 
                                 {/* Empty state notice */}
                                 <div className="lg:col-span-5 flex flex-col justify-center items-center p-8 text-center bg-white min-h-[300px]">
-                                    <div className="mb-4 p-4 bg-slate-50 rounded-full text-slate-400">
-                                        <BookOpen className="h-10 w-10" />
+                                    <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-white">
+                                        <img
+                                            src="/no_book.png"
+                                            alt="No Books Selected"
+                                            className="w-68 h-68 object-contain select-none pointer-events-none"
+                                        />
                                     </div>
-                                    <h4 className="text-sm font-bold text-slate-800 mb-1">
-                                        No Book Selected
-                                    </h4>
-                                    <p className="text-[11px] text-slate-400 max-w-[200px] leading-relaxed">
-                                        Select a book from the left panel to manage its members and access roles.
-                                    </p>
                                 </div>
 
                                 {/* Rules references with beautiful accordions */}
@@ -1434,6 +1569,55 @@ export default function TeamManagementPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Mobile Business Member Details Drawer */}
+            <Sheet open={isMobileMemberDetailOpen} onOpenChange={setIsMobileMemberDetailOpen}>
+                <SheetContent side="right" className="w-full sm:max-w-[450px] p-0 overflow-y-auto [&>button]:hidden border-none">
+                    <div className="flex flex-col h-full bg-white relative">
+                        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+                            <h3 className="text-sm font-bold text-gray-900">Member Settings</h3>
+                            <button
+                                onClick={() => setIsMobileMemberDetailOpen(false)}
+                                className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 cursor-pointer transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto min-h-0 bg-white">
+                            {renderBusinessMemberSettings()}
+                        </div>
+                    </div>
+                </SheetContent>
+            </Sheet>
+
+            {/* Mobile Book Members Drawer */}
+            <Sheet open={isMobileBookMembersOpen} onOpenChange={setIsMobileBookMembersOpen}>
+                <SheetContent side="right" className="w-full sm:max-w-[450px] p-0 overflow-y-auto [&>button]:hidden border-none">
+                    <div className="flex flex-col h-full bg-white relative">
+                        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+                            <h3 className="text-sm font-bold text-gray-900">Members List</h3>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    disabled={!selectedBookId}
+                                    onClick={() => setShowAddBookMemberSheet(true)}
+                                    className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-full px-3 py-1 text-[10px] font-semibold flex items-center gap-1 shadow-sm h-7 cursor-pointer border-none shrink-0"
+                                >
+                                    Add Member +
+                                </Button>
+                                <button
+                                    onClick={() => setIsMobileBookMembersOpen(false)}
+                                    className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 cursor-pointer transition-colors"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto min-h-0 bg-white">
+                            {renderBookMembersList()}
+                        </div>
+                    </div>
+                </SheetContent>
+            </Sheet>
         </DashboardSubLayout>
     );
 }

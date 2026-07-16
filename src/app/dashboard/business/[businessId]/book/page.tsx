@@ -39,12 +39,14 @@ import { useGetCashbookList } from "@/services/cashbook.service";
 import { useCompanyMemberRole } from "@/services/check-role.service";
 import { CreateTransferForm } from "@/components/form/transfer/create-transfer-form";
 import { ExportButton } from "@/components/buttons/export-button";
+import { TransferActions } from "@/components/actions/transfer-actions";
 import {
   useGetTransactionsByBook,
   useCreateTransaction,
   useGetTransaction,
   useUpdateTransaction,
   useDeleteTransaction,
+  useVerifyTransaction,
 } from "@/services/transaction.service";
 import { useGetCategoriesByBook } from "@/services/category.service";
 import { QuickPartiesPage } from "@/components/dashboard/party/quick-party-page";
@@ -67,6 +69,8 @@ import {
   Calendar as CalendarIcon,
   ArrowDownCircle,
   ArrowUpCircle,
+  ArrowDown,
+  ArrowUp,
   Printer,
   FileText,
   ChevronRight,
@@ -84,6 +88,7 @@ import {
   ArrowLeftRight,
   RefreshCw,
   Eye,
+  EyeOff,
   BookOpen,
   Settings,
 } from "lucide-react";
@@ -99,9 +104,11 @@ export default function BookPage() {
   const { setCashbook } = useBusiness();
   const { user } = useAuth();
   const token = user?.accessToken || "";
+  const { verifyTransaction, isVerifyingTransaction } = useVerifyTransaction();
 
   // Active book state
   const [activeBookId, setActiveBookId] = useState<string>("");
+  const [showPrices, setShowPrices] = useState<boolean>(false);
 
   // Search & Filter State
   const [searchText, setSearchText] = useState("");
@@ -116,6 +123,37 @@ export default function BookPage() {
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [addTransactionMode, setAddTransactionMode] = useState<"cash_in" | "cash_out">("cash_in");
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  // Mobile Back Button Interceptor for drawers
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handlePopState = (event: PopStateEvent) => {
+      if (isMobileOpen) {
+        setIsMobileOpen(false);
+        setActivePanelType("placeholder");
+        setSelectedTransactionId(null);
+      }
+    };
+
+    if (isMobileOpen) {
+      window.history.pushState({ drawerOpen: true }, "");
+      window.addEventListener("popstate", handlePopState);
+    }
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [isMobileOpen]);
+
+  // Clean up history state if drawer is closed manually
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isMobileOpen && window.history.state?.drawerOpen) {
+      window.history.back();
+    }
+  }, [isMobileOpen]);
+
 
   // Load Book List
   const {
@@ -240,6 +278,16 @@ export default function BookPage() {
   );
 
   const formatAmount = (val: number) => {
+    if (!showPrices) {
+      const formattedZero = new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: currency || "INR",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(0);
+      const symbol = formattedZero.replace(/\d/g, "").trim();
+      return `${symbol} ••••`;
+    }
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: currency || "INR",
@@ -262,10 +310,18 @@ export default function BookPage() {
   };
 
   const handleSelectTransaction = (id: string) => {
-    setSelectedTransactionId(id);
-    setActivePanelType("details");
-    if (window.innerWidth < 768) {
-      setIsMobileOpen(true);
+    if (selectedTransactionId === id) {
+      setSelectedTransactionId(null);
+      setActivePanelType("placeholder");
+      if (window.innerWidth < 768) {
+        setIsMobileOpen(false);
+      }
+    } else {
+      setSelectedTransactionId(id);
+      setActivePanelType("details");
+      if (window.innerWidth < 768) {
+        setIsMobileOpen(true);
+      }
     }
   };
 
@@ -273,15 +329,32 @@ export default function BookPage() {
   const renderRightPanel = () => {
     if (activePanelType === "add_book") {
       return (
-        <div className="flex-1 flex flex-col w-full h-full overflow-y-auto p-4 md:p-6 bg-gray-50/30">
-          <AddCashbookForm
-            businessId={businessId}
-            onClose={() => {
-              setActivePanelType("placeholder");
-              if (window.innerWidth < 768) setIsMobileOpen(false);
-              refetchCashbookList();
-            }}
-          />
+        <div className="flex flex-col h-full bg-white relative">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 shrink-0">
+            <h3 className="text-lg font-bold text-gray-900">Create Book</h3>
+            <button
+              onClick={() => {
+                setActivePanelType("placeholder");
+                setIsMobileOpen(false);
+              }}
+              className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 cursor-pointer transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-6 py-2 scrollbar-none">
+            <AddCashbookForm
+              businessId={businessId}
+              showHeader={false}
+              onClose={() => {
+                setActivePanelType("placeholder");
+                if (window.innerWidth < 768) setIsMobileOpen(false);
+                refetchCashbookList();
+              }}
+            />
+          </div>
         </div>
       );
     }
@@ -291,7 +364,7 @@ export default function BookPage() {
         <TransactionFormProvider defaultVisibleFields={defaultVisibleFields}>
           <div className="flex flex-col h-full bg-white relative">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+            <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 shrink-0">
               <h3 className="text-base font-bold text-gray-900">
                 {addTransactionMode === "cash_in" ? "Add Cash In Entry" : "Add Cash Out Entry"}
               </h3>
@@ -300,13 +373,13 @@ export default function BookPage() {
                   setActivePanelType("placeholder");
                   setIsMobileOpen(false);
                 }}
-                className="p-1 rounded-full hover:bg-gray-100 text-gray-500 cursor-pointer"
+                className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 scrollbar-none">
+            <div className="flex-1 overflow-y-auto scrollbar-none">
               <AddTransactionForm
                 businessId={businessId}
                 type={addTransactionMode}
@@ -337,7 +410,7 @@ export default function BookPage() {
                 onClick={() => {
                   setActivePanelType("details");
                 }}
-                className="p-1 rounded-full hover:bg-gray-100 text-gray-500 cursor-pointer"
+                className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -365,18 +438,18 @@ export default function BookPage() {
       return (
         <div className="flex flex-col h-full bg-white relative">
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
-            <h3 className="text-base font-bold text-gray-900">Transfer Funds</h3>
+            <h3 className="text-base font-bold text-gray-900">Transfer Funds Between Books</h3>
             <button
               onClick={() => {
                 setActivePanelType("placeholder");
                 setIsMobileOpen(false);
               }}
-              className="p-1 rounded-full hover:bg-gray-100 text-gray-500"
+              className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto px-2 sm:px-6 py-2">
             <CreateTransferForm
               businessId={businessId}
               cashbookId={activeBookId}
@@ -417,58 +490,63 @@ export default function BookPage() {
           }}
           currency={currency}
           bookName={activeBook?.name}
+          showPrices={showPrices}
+          onToggleShowPrices={() => setShowPrices((prev) => !prev)}
         />
       );
     }
 
     // Default Placeholder
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-gray-50/50">
-        <div className="relative flex items-center justify-center w-20 h-20 mb-6 bg-blue-50 rounded-2xl text-blue-600 animate-pulse">
-          <FileText className="w-10 h-10" />
-          <Search className="absolute -bottom-1 -right-1 w-6 h-6 p-1 bg-white rounded-full border shadow-sm text-gray-700" />
-        </div>
-        <h3 className="text-lg font-semibold text-gray-800">No Transaction Selected</h3>
-        <p className="max-w-xs mt-2 text-sm text-gray-500">
-          Click on any transaction from the list to view its summary, activity logs, attachments, or add a new entry.
-        </p>
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-white">
+        <img
+          src="/no_book.png"
+          alt="No Books Selected"
+          className="w-72 h-72 object-contain select-none pointer-events-none"
+        />
       </div>
     );
   };
 
   return (
     <DashboardSubLayout showTitle={false}>
-      <div className="grid grid-cols-1 md:grid-cols-5 h-[calc(100vh-32px)] mx-[-8px] md:mx-[-24px] overflow-hidden bg-white">
+      <div className="grid grid-cols-1 md:grid-cols-5 h-[calc(100dvh-72px)] md:h-[calc(100vh-22px)] mx-[-10px] md:mx-[-24px] mt-[-10px]">
 
         {/* LEFT PANEL: Console and List */}
-        <div className="flex flex-col col-span-1 md:col-span-3 h-full min-w-0 bg-white border-r border-gray-100 overflow-hidden">
+        <div className="flex flex-col col-span-1 md:col-span-3 h-full min-w-0 bg-white border-r border-gray-100">
 
           {/* Header row inside LEFT PANEL */}
-          <div className="flex items-center justify-between py-3 px-6 pb-3 bg-white shrink-0 border-b">
-            <h2 className="text-md md:text-base font-extrabold text-gray-900 uppercase tracking-wide">
-            {company?.name
-              ? `${company.name.slice(0, 35)}${company.name.length > 35 ? "..." : ""}`
-              : "Books Entries"}
-          </h2>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between py-3 px-4 sm:px-6 pb-3 bg-white shrink-0 border-b">
+            <h2 className="text-sm sm:text-base font-extrabold text-gray-900 uppercase tracking-wide truncate mr-2">
+              {company?.name
+                ? `${company.name.slice(0, 35)}${company.name.length > 35 ? "..." : ""}`
+                : "Books Entries"}
+            </h2>
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => refetchTransactions()}
-                className="h-7 border-gray-200 text-[14px] font-semibold px-2 hover:bg-gray-50 flex items-center gap-1 text-gray-700 rounded-lg shrink-0 cursor-pointer"
+                onClick={() => setShowPrices((prev) => !prev)}
+                className="h-7 border-gray-200 hover:bg-gray-50 flex items-center justify-center text-gray-700 rounded-lg shrink-0 cursor-pointer p-0 w-7 sm:w-auto sm:px-2 gap-1.5"
+                title={showPrices ? "Hide Balance" : "Show Balance"}
               >
-                <RefreshCw className="w-3 h-3" />
-                <span>Refresh</span>
+                {showPrices ? (
+                  <Eye className="w-3.5 h-3.5 text-blue-600" />
+                ) : (
+                  <EyeOff className="w-3.5 h-3.5 text-gray-400" />
+                )}
+                <span className="hidden sm:inline text-xs font-semibold">{showPrices ? "Hide" : "Show"}</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 border-gray-200 text-[14px] font-semibold px-2 hover:bg-gray-50 hover:border-gray-300 flex items-center gap-1 text-gray-700 rounded-lg shrink-0 cursor-pointer transition-colors"
+                className="h-7 border-gray-200 hover:bg-gray-50 hover:border-gray-300 flex items-center justify-center text-gray-700 rounded-lg shrink-0 cursor-pointer transition-colors p-0 w-7 sm:w-auto sm:px-2 gap-1"
+                title="Book Settings"
                 asChild
               >
                 <Link href={`/dashboard/business/${businessId}/${activeBookId}/setting`}>
-                  <Settings className="w-3 h-3" />
-                  <span>Settings</span>
+                  <Settings className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline text-xs font-semibold">Settings</span>
                 </Link>
               </Button>
               {canCreateBook && (
@@ -480,17 +558,18 @@ export default function BookPage() {
                       setIsMobileOpen(true);
                     }
                   }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-3 h-7 text-[14px] flex items-center gap-1 shadow-sm transition-all duration-200 active:scale-95 shrink-0 cursor-pointer"
+                  className="bg-[#4D80E0] hover:bg-[#3b6ecc] text-white rounded-lg h-7 flex items-center justify-center shadow-sm transition-all duration-200 active:scale-95 shrink-0 cursor-pointer p-0 w-7 sm:w-auto sm:px-3 gap-1"
+                  title="New Book"
                 >
-                  <span>New Book</span>
-                  <Plus className="w-3 h-3" />
+                  <Plus className="w-3.5 h-3.5 text-white" />
+                  <span className="hidden sm:inline text-xs font-semibold text-white">New Book</span>
                 </Button>
               )}
             </div>
           </div>
 
           {/* Book Tabs Navigation */}
-          <div className="flex items-center justify-between px-6 border-b border-gray-100 bg-white shrink-0 h-10">
+          <div className="flex items-center justify-between px-4 sm:px-6 border-b border-gray-100 bg-white shrink-0 h-10">
             <div className="flex items-center gap-4 overflow-x-auto scrollbar-none">
               {cashbookList.map((book) => {
                 const isActive = book._id === activeBookId;
@@ -514,15 +593,15 @@ export default function BookPage() {
           </div>
 
           {/* Search bar */}
-          <div className="px-6 py-3 border-b border-gray-100 bg-white shrink-0">
+          <div className="px-4 sm:px-6 mt-2 bg-white shrink-0">
             <div className="relative w-full group">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 group-focus-within:text-blue-600 transition-colors" />
               <Input
                 type="text"
                 placeholder="Search Transactions..."
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                className="h-10 pl-10 pr-8 bg-gray-50 border-gray-200 focus-visible:bg-white focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-100 rounded-xl transition-all placeholder:text-gray-400 text-sm font-medium"
+                className="h-10 pl-10 pr-8 bg-gray-50 border-gray-200 focus-visible:bg-white focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-100 rounded-xl transition-all placeholder:text-gray-600 text-sm font-medium"
               />
               {searchText && (
                 <button
@@ -536,12 +615,12 @@ export default function BookPage() {
           </div>
 
           {/* Filters Row */}
-          <div className="flex flex-wrap items-center gap-2.5 px-6 py-3 border-b border-gray-100 bg-gray-50/20 shrink-0">
+          <div className="flex items-center gap-2 px-4 sm:px-6 py-2.5 overflow-x-auto scrollbar-none border-b border-gray-100 bg-gray-50/20 shrink-0">
 
             {/* View By (Date) Popover */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 rounded-full border-gray-200 text-xs font-semibold bg-white text-gray-700 flex items-center gap-1.5 hover:bg-gray-50 hover:border-gray-300">
+                <Button variant="outline" size="sm" className="h-8 rounded-full border-gray-200 text-xs font-semibold bg-white text-gray-700 flex items-center gap-1.5 hover:bg-gray-50 hover:border-gray-300 shrink-0">
                   <CalendarIcon className="w-3.5 h-3.5 text-gray-500" />
                   <span>
                     {dateFilterType === "all" ? "View By" : `Date: ${dateFilterType}`}
@@ -600,7 +679,7 @@ export default function BookPage() {
             {/* Category Popover */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 rounded-full border-gray-200 text-xs font-semibold bg-white text-gray-700 flex items-center gap-1.5 hover:bg-gray-50 hover:border-gray-300">
+                <Button variant="outline" size="sm" className="h-8 rounded-full border-gray-200 text-xs font-semibold bg-white text-gray-700 flex items-center gap-1.5 hover:bg-gray-50 hover:border-gray-300 shrink-0">
                   <span>
                     {selectedCategory === "all" ? "Category" : `Cat: ${selectedCategory}`}
                   </span>
@@ -635,7 +714,7 @@ export default function BookPage() {
             {/* Payment Mode Popover */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 rounded-full border-gray-200 text-xs font-semibold bg-white text-gray-700 flex items-center gap-1.5 hover:bg-gray-50 hover:border-gray-300">
+                <Button variant="outline" size="sm" className="h-8 rounded-full border-gray-200 text-xs font-semibold bg-white text-gray-700 flex items-center gap-1.5 hover:bg-gray-50 hover:border-gray-300 shrink-0">
                   <span>
                     {selectedPaymentMode === "all" ? "Payment Mode" : `Mode: ${selectedPaymentMode}`}
                   </span>
@@ -675,7 +754,7 @@ export default function BookPage() {
                   setSelectedCategory("all");
                   setSelectedPaymentMode("all");
                 }}
-                className="text-xs font-bold text-red-500 hover:text-red-700 ml-1.5 transition-colors"
+                className="text-xs font-bold text-red-500 hover:text-red-700 ml-1.5 transition-colors shrink-0"
               >
                 Clear Filters
               </button>
@@ -683,86 +762,94 @@ export default function BookPage() {
           </div>
 
           {/* Financial Summary Card */}
-          <div className="px-10 py-4 bg-white border-b border-gray-100 shrink-0">
-            <div className="flex items-center justify-between gap-6">
-              <div className="flex gap-14 flex-1">
-                {/* Cash In */}
-                <div>
-                  <div className="text-2xl font-bold text-green-600">
-                    {formatAmount(globalAnalytics?.totalCashIn || 0)}
-                  </div>
-                  <span className="text-xs font-semibold text-gray-500 mt-1 block">
-                    Cash In
-                  </span>
+          <div className="px-4 sm:px-6 py-3 bg-white border-b border-gray-100 shrink-0 ml-0 sm:ml-6">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4 items-center w-full">
+              {/* Cash In */}
+              <div>
+                <div className="text-sm sm:text-lg font-bold text-[#43AF51] truncate">
+                  {formatAmount(globalAnalytics?.totalCashIn || 0)}
                 </div>
-
-                {/* Cash Out */}
-                <div className="border-l border-gray-100 pl-12">
-                  <div className="text-2xl font-bold text-red-600">
-                    {formatAmount(globalAnalytics?.totalCashOut || 0)}
-                  </div>
-                  <span className="text-xs font-semibold text-gray-500 mt-1 block">
-                    Cash Out
-                  </span>
-                </div>
-
-                {/* Current Balance */}
-                <div className="border-l border-gray-100 pl-12">
-                  <div
-                    className={`text-2xl font-bold ${(globalAnalytics?.totalCashIn || 0) -
-                      (globalAnalytics?.totalCashOut || 0) >=
-                      0
-                      ? "text-green-600"
-                      : "text-red-600"
-                      }`}
-                  >
-                    {formatAmount(
-                      (globalAnalytics?.totalCashIn || 0) -
-                      (globalAnalytics?.totalCashOut || 0)
-                    )}
-                  </div>
-                  <span className="text-xs font-semibold text-gray-500 mt-1 block">
-                    Current Balance
-                  </span>
-                </div>
+                <span className="text-[10px] sm:text-[11px] font-semibold text-gray-500 block">
+                  Cash In
+                </span>
               </div>
 
-              <ExportButton
-                bookId={activeBookId}
-                businessId={businessId}
-                token={token}
-              />
+              {/* Cash Out */}
+              <div className="border-l border-gray-100 pl-3 sm:pl-4">
+                <div className="text-sm sm:text-lg font-bold text-[#C54E4E] truncate">
+                  {formatAmount(globalAnalytics?.totalCashOut || 0)}
+                </div>
+                <span className="text-[10px] sm:text-[11px] font-semibold text-gray-500 block">
+                  Cash Out
+                </span>
+              </div>
+
+              {/* Current Balance */}
+              <div className="border-l border-gray-100 pl-3 sm:pl-4">
+                <div
+                  className={`text-sm sm:text-lg font-bold truncate ${(globalAnalytics?.totalCashIn || 0) -
+                    (globalAnalytics?.totalCashOut || 0) >=
+                    0
+                    ? "text-green-600"
+                    : "text-red-600"
+                    }`}
+                >
+                  {formatAmount(
+                    (globalAnalytics?.totalCashIn || 0) -
+                    (globalAnalytics?.totalCashOut || 0)
+                  )}
+                </div>
+                <span className="text-[10px] sm:text-[11px] font-semibold text-gray-500 block">
+                  Balance
+                </span>
+              </div>
+
+              {/* Grid 4: Empty */}
+              <div className="hidden sm:block"></div>
+
+              {/* Grid 5: Export / View Report Button */}
+              <div className="col-span-3 sm:col-span-1 flex justify-start sm:justify-end mt-2 sm:mt-0 w-full sm:w-auto">
+                <ExportButton
+                  bookId={activeBookId}
+                  businessId={businessId}
+                  token={token}
+                />
+              </div>
             </div>
           </div>
 
           {/* Ledger Table Headers */}
-          <div className="grid grid-cols-10 pl-6 pr-[30px] py-2 bg-gray-50 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wide shrink-0">
-            <div className="col-span-5 ml-6">Entity</div>
-            <div className="col-span-3 text-right">Cash In / Out</div>
-            <div className="col-span-2 text-right">Balance</div>
+          <div className="grid grid-cols-10 pl-4 pr-4 sm:pl-6 sm:pr-[30px] py-2 bg-gray-50 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wide shrink-0 ml-0 sm:ml-6">
+            <div className="col-span-4 sm:col-span-4 ml-0 sm:ml-6">Entity</div>
+            <div className="col-span-2 sm:col-span-2 text-right">Cash In / Out</div>
+            <div className="col-span-2 sm:col-span-2 text-right">Balance</div>
+            <div className="col-span-2 sm:col-span-2 text-right">Verify</div>
           </div>
 
           {/* Transaction List Entries */}
-          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2 bg-gray-50/20 custom-scrollbar ml-5">
+          <div className="flex-1 max-h-[360px] overflow-y-auto px-4 py-3 space-y-2 bg-gray-50/20 scrollbar-none ml-0 sm:ml-5">
             {isTransactionsPending ? (
               // Loading Skeleton
-              [...Array(5)].map((_, i) => (
+              [...Array(10)].map((_, i) => (
                 <div key={i} className="grid grid-cols-10 items-center p-3 bg-white border border-gray-100 rounded-xl animate-pulse">
-                  <div className="col-span-5 space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-40" />
+                  <div className="col-span-4 sm:col-span-4 space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-32" />
                   </div>
-                  <div className="col-span-3 flex justify-end pr-5">
-                    <Skeleton className="h-4 w-20" />
-                  </div>
-                  <div className="col-span-2 flex justify-end pr-5">
+                  <div className="col-span-2 sm:col-span-2 flex justify-end pr-3 sm:pr-5">
                     <Skeleton className="h-4 w-16" />
+                  </div>
+                  <div className="col-span-2 sm:col-span-2 flex justify-end pr-3 sm:pr-5">
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                  <div className="col-span-2 sm:col-span-2 flex justify-center">
+                    <Skeleton className="h-6 w-12 rounded" />
                   </div>
                 </div>
               ))
             ) : filteredTransactions.length === 0 ? (
               <>
-                {[...Array(4)].map((_, i) => (
+                {[...Array(3)].map((_, i) => (
                   <div
                     key={`empty-${i}`}
                     className="grid grid-cols-10 items-stretch border border-dashed border-gray-100 rounded-xl h-[82px] bg-white/20"
@@ -794,12 +881,12 @@ export default function BookPage() {
                         }`}
                     >
                       {/* Column 1: Entity */}
-                      <div className="col-span-5 p-4 flex flex-col justify-center gap-2 bg-white">
+                      <div className="col-span-4 sm:col-span-4 p-2 pl-3 sm:pl-4 flex flex-col justify-center gap-1 bg-white">
                         <span className="text-[11px] font-semibold text-slate-500">
                           {formattedDate} {formattedTime && `• ${formattedTime}`}
                         </span>
                         {tx.runningBalance !== undefined && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-[4px] bg-[#eef5ff] text-[#1b66ff] inline-block w-fit">
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-[4px] bg-[#eef5ff] text-[#1b66ff] inline-block w-fit">
                             Bal. {formatAmount(tx.runningBalance)}
                           </span>
                         )}
@@ -809,48 +896,95 @@ export default function BookPage() {
                       </div>
 
                       {/* Column 2: Cash In / Out */}
-                      <div className="col-span-3 flex items-center justify-end border-l border-gray-100 bg-gray-50/10 p-3 pr-5 bg-gray-400/20">
-                        <span className={`text-sm font-bold tracking-tight ${isCashIn ? "text-[#00a854]" : "text-[#e60000]"}`}>
+                      <div className="col-span-2 sm:col-span-2 flex items-center justify-end border-l border-gray-100 bg-gray-50/10 p-2 pr-3 sm:pr-5 bg-gray-400/20">
+                        <span className={`text-xs sm:text-[14px] font-bold tracking-tight ${isCashIn ? "text-[#00a854]" : "text-[#e60000]"}`}>
                           {isCashIn ? "+ " : "- "}{formatAmount(tx.amount)}
                         </span>
                       </div>
 
                       {/* Column 3: Balance */}
-                      <div className="col-span-2 flex items-center justify-end border-l border-gray-100 bg-gray-50/10 p-3 pr-5">
-                        <span className="text-xs font-bold text-slate-600">
+                      <div className="col-span-2 sm:col-span-2 flex items-center justify-end border-l border-gray-100 bg-gray-50/10 p-2 pr-3 sm:pr-5">
+                        <span className="text-xs sm:text-[14px] font-bold text-slate-600">
                           {tx.runningBalance !== undefined ? formatAmount(tx.runningBalance) : "-"}
                         </span>
                       </div>
+
+                      {/* Column 4: Verify */}
+                      <div className="col-span-2 sm:col-span-2 flex items-center justify-center border-l border-gray-100 bg-gray-50/10 p-2">
+                        {tx.isVerified ? (
+                          <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-0.5">
+                            <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                            Verified
+                          </span>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={isVerifyingTransaction}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              verifyTransaction(tx._id);
+                            }}
+                            className="h-6 px-2 text-[10px] font-bold text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100 cursor-pointer"
+                          >
+                            {isVerifyingTransaction ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              "Verify"
+                            )}
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* Row 2: Transfer Actions (only if pending transfer) */}
+                      {tx.subType === "transfer" &&
+                       tx.status === "pending" &&
+                       tx.type === "cash_in" && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className="col-span-10 p-2 bg-amber-50 border-t border-amber-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-left"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-xs text-amber-900 shrink-0">Transfer Action Required:</span>
+                            <span className="text-xs text-amber-800">Approve or reject this transfer request</span>
+                          </div>
+                          <TransferActions
+                            transferId={tx._id}
+                            status={tx.status as "pending" | "approved" | "rejected"}
+                            sourceBookId={tx.book}
+                            targetBookId={tx.targetBookId || ""}
+                            amount={tx.amount}
+                            currency={currency || "INR"}
+                            canApprove={true}
+                            canReject={true}
+                          />
+                        </div>
+                      )}
                     </div>
                   );
                 })}
-                {/* Filler slots to ensure at least 4 rows are shown */}
-                {filteredTransactions.length < 4 &&
-                  [...Array(4 - filteredTransactions.length)].map((_, i) => (
-                    <div
-                      key={`filler-${i}`}
-                      className="grid grid-cols-10 items-stretch border border-dashed border-gray-100 rounded-xl h-[82px] bg-white/20"
-                    />
-                  ))
-                }
               </>
             )}
           </div>
 
           {/* Sticky Bottom Actions inside list */}
-          <div suppressHydrationWarning className="mt-auto grid grid-cols-3 gap-4 px-6 pt-1 border-t border-gray-100 bg-white shrink-0 h-[50px] items-center">
+          <div suppressHydrationWarning className="mt-auto grid grid-cols-3 gap-1.5 sm:gap-2 px-4 sm:px-6 border-t border-gray-100 bg-white shrink-0 h-[52px] items-center">
             <button
               onClick={() => handleOpenAddTransaction("cash_in")}
-              className="flex items-center justify-center gap-1.5 h-10 bg-[#00a854] hover:bg-[#009148] active:scale-95 text-white font-bold text-xs md:text-sm rounded-2xl transition-all shadow-sm cursor-pointer"
+              className="flex items-center justify-center gap-1 sm:gap-1.5 h-9 bg-[#43AF51] active:scale-95 text-white font-bold text-[10px] sm:text-[11px] rounded-lg transition-all shadow-sm cursor-pointer px-1 sm:px-2.5"
             >
-              <Plus className="w-4 h-4" />
+              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white flex items-center justify-center text-[#43AF51] shrink-0">
+                <ArrowDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
+              </div>
               <span>Cash In</span>
             </button>
             <button
               onClick={() => handleOpenAddTransaction("cash_out")}
-              className="flex items-center justify-center gap-1.5 h-10 bg-[#e60000] hover:bg-[#c70000] active:scale-95 text-white font-bold text-xs md:text-sm rounded-2xl transition-all shadow-sm cursor-pointer"
+              className="flex items-center justify-center gap-1 sm:gap-1.5 h-9 bg-[#C54E4E] active:scale-95 text-white font-bold text-[10px] sm:text-[11px] rounded-lg transition-all shadow-sm cursor-pointer px-1 sm:px-2.5"
             >
-              <Plus className="w-4 h-4" />
+              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white flex items-center justify-center text-[#C54E4E] shrink-0">
+                <ArrowUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
+              </div>
               <span>Cash Out</span>
             </button>
             <button
@@ -861,9 +995,11 @@ export default function BookPage() {
                   setIsMobileOpen(true);
                 }
               }}
-              className="flex items-center justify-center gap-1.5 h-10 bg-[#1b66ff] hover:bg-[#0052cc] active:scale-95 text-white font-bold text-xs md:text-sm rounded-2xl transition-all shadow-sm cursor-pointer"
+              className="flex items-center justify-center gap-1 sm:gap-1.5 h-9 bg-[#1b66ff] active:scale-95 text-white font-bold text-[10px] sm:text-[11px] rounded-lg transition-all shadow-sm cursor-pointer px-1 sm:px-2.5"
             >
-              <ArrowLeftRight className="w-4 h-4" />
+              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white flex items-center justify-center text-[#1b66ff] shrink-0">
+                <ArrowLeftRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
+              </div>
               <span>Transfer</span>
             </button>
           </div>
@@ -877,7 +1013,7 @@ export default function BookPage() {
 
         {/* Drawer for Mobile layout */}
         <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-          <SheetContent side="right" className="w-full sm:max-w-[450px] p-0 overflow-y-auto">
+          <SheetContent side="right" className="w-full sm:max-w-[450px] p-0 overflow-y-auto [&>button]:hidden">
             {renderRightPanel()}
           </SheetContent>
         </Sheet>
@@ -990,6 +1126,8 @@ interface TransactionDetailsPaneProps {
   onDeleteSuccess: () => void;
   currency: string;
   bookName?: string;
+  showPrices: boolean;
+  onToggleShowPrices?: () => void;
 }
 
 function TransactionDetailsPane({
@@ -999,6 +1137,8 @@ function TransactionDetailsPane({
   onDeleteSuccess,
   currency,
   bookName,
+  showPrices,
+  onToggleShowPrices,
 }: TransactionDetailsPaneProps) {
   const { transactionData, isTransactionPending, refetchTransaction } = useGetTransaction(transactionId);
   const { transactionAuditLogs = [], isTransactionAuditLogsPending } = useGetTransactionAuditLogs(transactionId);
@@ -1007,8 +1147,56 @@ function TransactionDetailsPane({
 
   const [activeTab, setActiveTab] = useState<"details" | "logs">("details");
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isMobileScreen, setIsMobileScreen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileScreen(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Mobile Back Button Interceptor for Delete Confirmation Dialog
+  useEffect(() => {
+    if (typeof window === "undefined" || !isMobileScreen) return;
+
+    const handlePopState = (event: PopStateEvent) => {
+      if (isDeleteConfirmOpen) {
+        setIsDeleteConfirmOpen(false);
+      }
+    };
+
+    if (isDeleteConfirmOpen) {
+      window.history.pushState({ deleteConfirmOpen: true }, "");
+      window.addEventListener("popstate", handlePopState);
+    }
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [isDeleteConfirmOpen, isMobileScreen]);
+
+  // Clean up history state if delete dialog is closed manually
+  useEffect(() => {
+    if (typeof window === "undefined" || !isMobileScreen) return;
+    if (!isDeleteConfirmOpen && window.history.state?.deleteConfirmOpen) {
+      window.history.back();
+    }
+  }, [isDeleteConfirmOpen, isMobileScreen]);
 
   const formatAmount = (val: number) => {
+    if (!showPrices) {
+      const formattedZero = new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: currency || "INR",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(0);
+      const symbol = formattedZero.replace(/\d/g, "").trim();
+      return `${symbol} ••••`;
+    }
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: currency || "INR",
@@ -1042,124 +1230,303 @@ function TransactionDetailsPane({
   const formattedDate = format(parseISO(transactionData.date), "MMMM dd, yyyy");
   const formattedTime = transactionData.time || "";
 
+  const renderDetailsBody = () => (
+    <>
+      {/* Banner Summary matching screenshot */}
+      <div className={`p-3 rounded-[18px] border text-left relative overflow-hidden ${isCashIn
+        ? "bg-[#e8f8f0] border-[#c3e6cb] text-[#2e7d32]"
+        : "bg-[#fde8e8] border-[#f5c6cb] text-[#c62828]"
+        }`}>
+        <div className="flex items-center gap-1.5 mb-2.5">
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${isCashIn
+            ? "border-[#a3e2ab] text-[#2e7d32] bg-[#ebf7ec]"
+            : "border-[#f5c6cb] text-[#c62828] bg-[#fde8e8]"
+            }`}>
+            {isCashIn ? "Money In" : "Money Out"}
+          </span>
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${isCashIn
+            ? "border-[#a3e2ab] text-[#2e7d32] bg-[#ebf7ec]"
+            : "border-[#f5c6cb] text-[#c62828] bg-[#fde8e8]"
+            }`}>
+            Confirmed
+          </span>
+        </div>
+        <div className={`text-[20px] md:text-[22px] font-bold tracking-tight leading-none my-1 ${isCashIn ? "text-[#2e7d32]" : "text-[#c62828]"}`}>
+          {isCashIn ? "" : "-"}
+          {formatAmount(transactionData.amount)}
+        </div>
+        <p className="text-[11px] text-gray-400 font-normal mt-1.5">
+          on {formattedDate} at {formattedTime}
+        </p>
+      </div>
+
+      {/* Running Balance row matching screenshot */}
+      {transactionData.runningBalance !== undefined && (
+        <div className="flex items-center justify-between py-2 px-3.5 rounded-lg bg-[#43a047] text-white font-semibold text-[11px] shadow-sm">
+          <span>Running Balance</span>
+          <span>{formatAmount(transactionData.runningBalance)}</span>
+        </div>
+      )}
+
+      {/* Details Grid Table matching screenshot */}
+      <div className="bg-[#f5f6fa] rounded-xl p-4 space-y-3.5">
+        <div className="flex items-center justify-between border-b border-gray-200/50 pb-2.5">
+          <span className="text-[11px] font-medium text-gray-700">Payment Mode</span>
+          <span className="text-[11px] font-medium text-[#3f66e5]">
+            {transactionData.paymentModeDetails?.name || transactionData.paymentMode || "Cash"}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between border-b border-gray-200/50 pb-2.5">
+          <span className="text-[11px] font-medium text-gray-700">Category</span>
+          <span className="text-[11px] font-medium text-[#3f66e5]">
+            {transactionData.categoryDetails?.name || transactionData.category || "General"}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between border-b border-gray-200/50 pb-2.5">
+          <span className="text-[11px] font-medium text-gray-700">Book</span>
+          <span className="text-[11px] font-medium text-[#3f66e5]">
+            {bookName || "GH3"}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between border-b border-gray-200/50 pb-2.5">
+          <span className="text-[11px] font-medium text-gray-700">Created by</span>
+          <span className="text-[11px] font-medium text-[#3f66e5]">
+            {typeof transactionData.createdBy === "object" ? transactionData.createdBy?.name : "Admin"}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between pb-0.5">
+          <span className="text-[11px] font-medium text-gray-700">Updated by</span>
+          <span className="text-[11px] font-medium text-[#3f66e5]">
+            {typeof transactionData.createdBy === "object" ? transactionData.createdBy?.name : "Admin"}
+          </span>
+        </div>
+      </div>
+
+      {/* Attachments Section */}
+      {transactionData.attachments && transactionData.attachments.length > 0 && (
+        <div className="space-y-2 shrink-0">
+          <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Attachments</h4>
+          <div className="grid gap-2">
+            {transactionData.attachments.map((att) => (
+              <a
+                key={att._id}
+                href={att.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 border border-gray-100 rounded-xl transition-all group"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <FileText className="w-4.5 h-4.5 text-blue-500 group-hover:scale-110 transition-transform shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold text-gray-700 truncate">{att.key}</p>
+                    <p className="text-[9px] text-gray-400">{(att.size / 1024).toFixed(1)} KB • {att.fileType}</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  const renderLogsBody = () => (
+    <>
+      {isTransactionAuditLogsPending ? (
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+        </div>
+      ) : transactionAuditLogs.length === 0 ? (
+        <p className="text-xs font-semibold text-center text-gray-400 py-4">No activity logs recorded.</p>
+      ) : (
+        <div className="space-y-4 divide-y divide-gray-100">
+          {transactionAuditLogs.map((log, idx) => {
+            const logDate = new Date(log.changedAt);
+            const formattedLogDateTime = (() => {
+              try {
+                return format(logDate, "dd MMM yy '•' hh:mm a");
+              } catch (e) {
+                return log.changedAt;
+              }
+            })();
+
+            const isCurrentUser = user?._id === log.changedBy?._id;
+            const authorDisplay = `${isCurrentUser ? "You" : (log.changedBy?.name || "User")} • ${log.changedBy?.email || ""}`;
+
+            return (
+              <div key={log._id} className={`text-xs space-y-1.5 text-left ${idx > 0 ? "pt-4" : ""}`}>
+                <div className="text-[11px] text-gray-400 font-medium">
+                  {formattedLogDateTime}
+                </div>
+                <div>
+                  <span className="inline-block text-[#3b82f6] bg-[#eef2ff] border border-[#dbeafe] px-2.5 py-0.5 rounded-[4px] text-[11px] font-semibold">
+                    Transaction {log.changeType === "create" ? "Created" : log.changeType === "update" ? "Updated" : "Deleted"} by User
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-500 font-medium">
+                  {authorDisplay}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+
+  const renderFooterControls = () => (
+    <div className="grid grid-cols-2 gap-3 px-6 py-4 border-t border-gray-100 bg-white shrink-0 shadow-[0_-4px_12px_rgba(0,0,0,0.02)]">
+      <Button
+        onClick={onEdit}
+        variant="outline"
+        className="h-10 border-gray-200 hover:bg-gray-50 rounded-xl text-xs font-bold text-gray-700 flex items-center justify-center gap-1.5 cursor-pointer"
+      >
+        <Edit2 className="w-3.5 h-3.5" />
+        <span>Edit Entry</span>
+      </Button>
+      <Button
+        onClick={() => setIsDeleteConfirmOpen(true)}
+        variant="destructive"
+        className="h-10 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-100 hover:border-red-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+      >
+        <Trash2 className="w-3.5 h-3.5" />
+        <span>Delete Entry</span>
+      </Button>
+    </div>
+  );
+
+  const renderDeleteDialog = () => (
+    <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+      <DialogContent className="sm:max-w-[400px] p-6 z-[99999]">
+        <div className="flex flex-col items-center text-center space-y-4">
+          <div className="p-3 bg-red-50 text-red-600 rounded-full">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Delete Entry?</h3>
+            <p className="text-xs font-medium text-gray-500 mt-1.5">
+              This transaction will be moved to the Recycle Bin. You can restore it later if needed.
+            </p>
+          </div>
+          <div className="flex gap-3 w-full mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteConfirmOpen(false)}
+              className="flex-1 h-10 border-gray-200 rounded-xl text-xs font-bold text-gray-700 cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDelete}
+              disabled={isDeletingTransaction}
+              className="flex-1 h-10 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1 cursor-pointer"
+            >
+              {isDeletingTransaction && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              <span>Delete</span>
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
+  if (isMobileScreen) {
+    return (
+      <div className="flex flex-col h-full bg-white relative">
+        {/* Header matching other panels */}
+        <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 shrink-0 bg-white">
+          <h3 className="text-base font-bold text-gray-900">Transaction Details</h3>
+          <div className="flex items-center gap-1">
+            {onToggleShowPrices && (
+              <button
+                onClick={onToggleShowPrices}
+                className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 cursor-pointer transition-colors"
+                title={showPrices ? "Hide Balance" : "Show Balance"}
+              >
+                {showPrices ? (
+                  <Eye className="w-5 h-5 text-blue-600" />
+                ) : (
+                  <EyeOff className="w-5 h-5 text-gray-400" />
+                )}
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 cursor-pointer transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="flex border-b border-gray-100 bg-gray-50/50 p-1 gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={() => setActiveTab("details")}
+            className={`flex-1 py-1.5 text-center text-xs font-semibold rounded-lg transition-all cursor-pointer ${activeTab === "details"
+                ? "bg-white text-blue-600 shadow-xs border border-gray-150"
+                : "text-gray-500 hover:text-gray-900"
+              }`}
+          >
+            Details
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("logs")}
+            className={`flex-1 py-1.5 text-center text-xs font-semibold rounded-lg transition-all cursor-pointer ${activeTab === "logs"
+                ? "bg-white text-blue-600 shadow-xs border border-gray-150"
+                : "text-gray-500 hover:text-gray-900"
+              }`}
+          >
+            Activity Logs
+          </button>
+        </div>
+
+        {/* Transaction Details Body */}
+        {activeTab === "details" && (
+          <div className="flex-1 overflow-y-auto p-5 space-y-4.5 scrollbar-none border-b border-gray-100 bg-white mr-0">
+            {renderDetailsBody()}
+          </div>
+        )}
+
+        {/* Activity Logs Body */}
+        {activeTab === "logs" && (
+          <div className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-none bg-white border-b border-gray-100">
+            {renderLogsBody()}
+          </div>
+        )}
+
+        {/* Footer Controls */}
+        {renderFooterControls()}
+
+        {/* Delete Confirmation Dialog */}
+        {renderDeleteDialog()}
+      </div>
+    );
+  }
+
+  // Desktop Accordion Layout
   return (
     <div className="flex flex-col h-full bg-white relative">
-
-      {/* Transaction Details Collapse Button Header */}
-      <button 
+      <button
         type="button"
         onClick={() => setActiveTab(activeTab === "details" ? "logs" : "details")}
         className="flex items-center justify-between w-full px-5 py-4 border-b border-gray-100 shrink-0 hover:bg-gray-50 transition-colors cursor-pointer text-left"
       >
-        <span className="text-lg font-bold text-gray-900">Transaction Details</span>
+        <span className="text-sm font-bold text-gray-900">Transaction Details</span>
         <ChevronRight className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${activeTab === "details" ? "rotate-90" : ""}`} />
       </button>
 
       {/* Transaction Details Body */}
       {activeTab === "details" && (
-        <div className="flex-1 overflow-y-auto p-5 space-y-4.5 scrollbar-none border-b border-gray-100 bg-white">
-
-          {/* Banner Summary matching screenshot */}
-          <div className={`p-5 rounded-[18px] border text-left relative overflow-hidden ${isCashIn
-            ? "bg-[#e8f8f0] border-[#c3e6cb] text-[#2e7d32]"
-            : "bg-[#fde8e8] border-[#f5c6cb] text-[#c62828]"
-            }`}>
-            <div className="flex items-center gap-1.5 mb-2.5">
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${isCashIn 
-                ? "border-[#a3e2ab] text-[#2e7d32] bg-[#ebf7ec]" 
-                : "border-[#f5c6cb] text-[#c62828] bg-[#fde8e8]"
-                }`}>
-                {isCashIn ? "Money In" : "Money Out"}
-              </span>
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${isCashIn 
-                ? "border-[#a3e2ab] text-[#2e7d32] bg-[#ebf7ec]" 
-                : "border-[#f5c6cb] text-[#c62828] bg-[#fde8e8]"
-                }`}>
-                Confirmed
-              </span>
-            </div>
-            <div className={`text-[28px] md:text-[32px] font-bold tracking-tight leading-none my-1 ${isCashIn ? "text-[#2e7d32]" : "text-[#c62828]"}`}>
-              {isCashIn ? "" : "-"}
-              {formatAmount(transactionData.amount)}
-            </div>
-            <p className="text-[11px] text-gray-400 font-normal mt-1.5">
-              on {formattedDate} at {formattedTime}
-            </p>
-          </div>
-
-          {/* Running Balance row matching screenshot */}
-          {transactionData.runningBalance !== undefined && (
-            <div className="flex items-center justify-between py-2.5 px-4 rounded-lg bg-[#43a047] text-white font-semibold text-[13px] shadow-sm">
-              <span>Running Balance</span>
-              <span>{formatAmount(transactionData.runningBalance)}</span>
-            </div>
-          )}
-
-          {/* Details Grid Table matching screenshot */}
-          <div className="bg-[#f5f6fa] rounded-xl p-4 space-y-3.5">
-            <div className="flex items-center justify-between border-b border-gray-200/50 pb-2.5">
-              <span className="text-[13px] font-medium text-gray-700">Payment Mode</span>
-              <span className="text-[13px] font-medium text-[#3f66e5]">
-                {transactionData.paymentModeDetails?.name || transactionData.paymentMode || "Cash"}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between border-b border-gray-200/50 pb-2.5">
-              <span className="text-[13px] font-medium text-gray-700">Category</span>
-              <span className="text-[13px] font-medium text-[#3f66e5]">
-                {transactionData.categoryDetails?.name || transactionData.category || "General"}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between border-b border-gray-200/50 pb-2.5">
-              <span className="text-[13px] font-medium text-gray-700">Book</span>
-              <span className="text-[13px] font-medium text-[#3f66e5]">
-                {bookName || "GH3"}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between border-b border-gray-200/50 pb-2.5">
-              <span className="text-[13px] font-medium text-gray-700">Created by</span>
-              <span className="text-[13px] font-medium text-[#3f66e5]">
-                {typeof transactionData.createdBy === "object" ? transactionData.createdBy?.name : "Admin"}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between pb-0.5">
-              <span className="text-[13px] font-medium text-gray-700">Updated by</span>
-              <span className="text-[13px] font-medium text-[#3f66e5]">
-                {typeof transactionData.createdBy === "object" ? transactionData.createdBy?.name : "Admin"}
-              </span>
-            </div>
-          </div>
-
-          {/* Attachments Section */}
-          {transactionData.attachments && transactionData.attachments.length > 0 && (
-            <div className="space-y-2 shrink-0">
-              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Attachments</h4>
-              <div className="grid gap-2">
-                {transactionData.attachments.map((att) => (
-                  <a
-                    key={att._id}
-                    href={att.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 border border-gray-100 rounded-xl transition-all group"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <FileText className="w-4.5 h-4.5 text-blue-500 group-hover:scale-110 transition-transform shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-gray-700 truncate">{att.key}</p>
-                        <p className="text-[10px] text-gray-400">{(att.size / 1024).toFixed(1)} KB • {att.fileType}</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
-
+        <div className="flex-1 overflow-y-auto p-5 space-y-4.5 scrollbar-none border-b border-gray-100 bg-white mr-4">
+          {renderDetailsBody()}
         </div>
       )}
 
@@ -1176,102 +1543,15 @@ function TransactionDetailsPane({
       {/* Activity Logs Body */}
       {activeTab === "logs" && (
         <div className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-none bg-white border-b border-gray-100">
-          {isTransactionAuditLogsPending ? (
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-            </div>
-          ) : transactionAuditLogs.length === 0 ? (
-            <p className="text-xs font-semibold text-center text-gray-400 py-4">No activity logs recorded.</p>
-          ) : (
-            <div className="space-y-4 divide-y divide-gray-100">
-              {transactionAuditLogs.map((log, idx) => {
-                const logDate = new Date(log.changedAt);
-                const formattedLogDateTime = (() => {
-                  try {
-                    return format(logDate, "dd MMM yy '•' hh:mm a");
-                  } catch (e) {
-                    return log.changedAt;
-                  }
-                })();
-                
-                const isCurrentUser = user?._id === log.changedBy?._id;
-                const authorDisplay = `${isCurrentUser ? "You" : (log.changedBy?.name || "User")} • ${log.changedBy?.email || ""}`;
-
-                return (
-                  <div key={log._id} className={`text-xs space-y-1.5 text-left ${idx > 0 ? "pt-4" : ""}`}>
-                    <div className="text-[11px] text-gray-400 font-medium">
-                      {formattedLogDateTime}
-                    </div>
-                    <div>
-                      <span className="inline-block text-[#3b82f6] bg-[#eef2ff] border border-[#dbeafe] px-2.5 py-0.5 rounded-[4px] text-[11px] font-semibold">
-                        Transaction {log.changeType === "create" ? "Created" : log.changeType === "update" ? "Updated" : "Deleted"} by User
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-gray-500 font-medium">
-                      {authorDisplay}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {renderLogsBody()}
         </div>
       )}
 
       {/* Footer Controls */}
-      <div className="grid grid-cols-2 gap-3 px-6 py-4 border-t border-gray-100 bg-white shrink-0 shadow-[0_-4px_12px_rgba(0,0,0,0.02)]">
-        <Button
-          onClick={onEdit}
-          variant="outline"
-          className="h-10 border-gray-200 hover:bg-gray-50 rounded-xl text-xs font-bold text-gray-700 flex items-center justify-center gap-1.5 cursor-pointer"
-        >
-          <Edit2 className="w-3.5 h-3.5" />
-          <span>Edit Entry</span>
-        </Button>
-        <Button
-          onClick={() => setIsDeleteConfirmOpen(true)}
-          variant="destructive"
-          className="h-10 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-100 hover:border-red-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-          <span>Delete Entry</span>
-        </Button>
-      </div>
+      {renderFooterControls()}
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-        <DialogContent className="sm:max-w-[400px] p-6 z-[99999]">
-          <div className="flex flex-col items-center text-center space-y-4">
-            <div className="p-3 bg-red-50 text-red-600 rounded-full">
-              <AlertTriangle className="w-8 h-8" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">Delete Entry?</h3>
-              <p className="text-xs font-medium text-gray-500 mt-1.5">
-                This transaction will be moved to the Recycle Bin. You can restore it later if needed.
-              </p>
-            </div>
-            <div className="flex gap-3 w-full mt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsDeleteConfirmOpen(false)}
-                className="flex-1 h-10 border-gray-200 rounded-xl text-xs font-bold text-gray-700 cursor-pointer"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleDelete}
-                disabled={isDeletingTransaction}
-                className="flex-1 h-10 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1 cursor-pointer"
-              >
-                {isDeletingTransaction && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                <span>Delete</span>
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
+      {renderDeleteDialog()}
     </div>
   );
 }

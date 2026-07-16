@@ -38,7 +38,7 @@ export function BusinessStatusCard({
       <CardHeader className="sm:p-4 px-3">
         <CardTitle className="flex flex-row justify-start items-center sm:items-start gap-3 sm:gap-4">
           <Avatar className="h-10 w-10 sm:h-12 sm:w-12 p-1 bg-white">
-            <AvatarImage src={logo || "/placeholder-business.svg"} />
+            {/* <AvatarImage src={logo || "/placeholder-business.svg"} /> */}
             <AvatarFallback className="capitalize text-primary dark:text-accent text-xl sm:text-2xl font-extrabold dark:bg-accent-foreground outline outline-white outline-offset-2">
               <Building2 className="w-4 h-4 sm:w-6 sm:h-6" />
               {/* {businesses?.length?.toLocaleString()} */}

@@ -1549,8 +1549,8 @@ export default function Page({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Date Filter - hidden for accountant (their range is fixed by dataAccessDurationDays) */}
               {!isAccountantRole && (
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-gray-600">View By</label>
+                <div className="space-y-2 ">
+                  <label className="text-xs font-medium text-gray-600 ">View By</label>
                   <div className="flex flex-wrap gap-2">
                     {(['all', 'today', 'week', 'month', 'custom'] as const).map((type) => (
                       <button
@@ -1560,7 +1560,7 @@ export default function Page({
                         className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
                           filters.dateFilter.type === type
                             ? 'bg-gray-800 text-white border-gray-800'
-                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                            : 'bg-[#F2F3F8] text-gray-700 border-gray-300 hover:bg-gray-100'
                         }`}
                       >
                         {type === 'all' ? 'All Time' : type.charAt(0).toUpperCase() + type.slice(1)}

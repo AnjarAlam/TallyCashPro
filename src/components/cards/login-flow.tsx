@@ -8,6 +8,8 @@ import { VerifyOtpResponse } from "@/interface/auth.types";
 import { Toaster } from "sonner";
 import { SignIn, VerifyOtp } from "../form";
 import { useRouter } from "next/navigation";
+import { axiosInstance } from "@/lib/axios";
+import { APIS } from "@/constants/api";
 
 type AuthStep = "signIn" | "verifyOtp" | "loggedIn";
 
@@ -21,19 +23,29 @@ export default function OtpAuthFlow() {
     setCurrentStep("verifyOtp");
   };
 
-  const handleOtpVerified = (res: VerifyOtpResponse) => {
+  const handleOtpVerified = async (res: VerifyOtpResponse) => {
     setCurrentStep("loggedIn");
 
-    // Here you would typically redirect the user or update global auth state
     console.log("User successfully logged in!", res);
-    const currentTime = Date.now();
-    console.log("currentTime", res);
 
-    // if (res.data.name) {
-    //   router.push("/dashboard");
-    // } else {
-    //   router.push("/dashboard/profile");
-    // }
+    if (res.data?.name) {
+      try {
+        const response = await axiosInstance.get(APIS.Business.listByUser.Url);
+        const companies = response.data?.data;
+        if (companies && companies.length > 0) {
+          const firstCompanyId = companies[0].company?._id;
+          if (firstCompanyId) {
+            window.location.href = `/dashboard/business/${firstCompanyId}/book`;
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch business during login redirect:", error);
+      }
+      window.location.href = "/dashboard";
+    } else {
+      window.location.href = "/signup";
+    }
   };
 
   const handleBackToSignIn = () => {

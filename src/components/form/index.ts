@@ -3,6 +3,7 @@ export { VerifyOtpForm as VerifyOtp } from "./auth/verify-otp";
 export { default as AddCashbookForm } from "./cashbook/add-cashbook"
 export { default as EditCashbook } from "./cashbook/edit-cashbook"
 export { default as AddBusinessForm } from "./business/add-business"
+export { default as CreateBusinessForm } from "./business/create-business"
 export { default as EditBusinessForm } from "./business/edit-business"
 export { AddBusinessMemberForm } from "./business/add-member"
 export { AddTransactionForm } from "./transaction/add-transaction"

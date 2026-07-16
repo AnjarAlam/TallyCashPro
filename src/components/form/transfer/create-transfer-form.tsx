@@ -107,10 +107,10 @@ const businessFilterOptions: {
   label: string;
   icon: React.ReactNode;
 }[] = [
-  { id: "all", label: "All Books", icon: <Infinity className="h-4 w-4" /> },
-  { id: "same", label: "Same Business", icon: <Building2 className="h-4 w-4" /> },
-  { id: "other", label: "Other Business", icon: <Briefcase className="h-4 w-4" /> },
-];
+    { id: "all", label: "All Books", icon: <Infinity className="h-4 w-4" /> },
+    { id: "same", label: "Same Business", icon: <Building2 className="h-4 w-4" /> },
+    { id: "other", label: "Other Business", icon: <Briefcase className="h-4 w-4" /> },
+  ];
 
 export function CreateTransferForm({
   businessId,
@@ -417,9 +417,9 @@ export function CreateTransferForm({
     <>
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">
+          {/* <h2 className="text-xl font-semibold text-gray-900">
             Transfer Between Books
-          </h2>
+          </h2> */}
           <p className="text-xs text-muted-foreground mt-1">
             Transfer funds between books in the same or different businesses.
             Cross-currency transfers require both source and target amounts.

@@ -32,6 +32,7 @@ export default function BusinessActivityPage({
       headerTitle="Activity & Logs"
       showPreviousPage
       showTitle
+      titleClassName="text-sm md:text-base font-bold"
       compList={[
         {
           comp: (

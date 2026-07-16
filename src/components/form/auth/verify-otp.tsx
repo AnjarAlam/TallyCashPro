@@ -83,7 +83,7 @@ export function VerifyOtpForm({
             await setSession(res.data.accessToken);
             recordSessionActivity();
             safeSessionStorage.removeItem("signupToken");
-            window.location.href = "/dashboard";
+            OnOtpVerified(res);
           } else {
             safeSessionStorage.setItem("signupToken", res.data.accessToken);
             window.location.href = "/signup";
@@ -216,7 +216,7 @@ export function VerifyOtpForm({
 
             <Button
               type="submit"
-              className="w-full bg-teal-800  dark:bg-teal-950 hover:bg-teal-800 text-white py-6 text-base rounded-lg"
+              className="w-full bg-gradient-to-r from-[#0088FF] to-[#1DB46B] text-white py-6 text-base rounded-lg hover:opacity-90 active:scale-[0.98] transition-all border-0 shadow-md"
               disabled={isVerifyingOtp}
             >
               {isVerifyingOtp ? "Verifying..." : "Verify & Continue"}

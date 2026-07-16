@@ -3,6 +3,8 @@
 import React from "react";
 import PreviousPage from "./previous-page";
 
+import { cn } from "@/lib/utils";
+
 export type compConfigProps = Array<{
   position: "left" | "center" | "right";
   comp: React.ReactNode;
@@ -30,6 +32,7 @@ interface TitleHeaderProps {
   components?: compConfigProps;
 
   showTitle?: boolean;
+  titleClassName?: string;
 }
 
 /**
@@ -43,6 +46,7 @@ export default function TitleHeader({
   headerTitle,
   headerTitlePosition = 0,
   components = [],
+  titleClassName,
 }: TitleHeaderProps) {
   const leftComponents = components.filter((c) => c.position === "left");
   const centerComponents = components.filter((c) => c.position === "center");
@@ -56,7 +60,7 @@ export default function TitleHeader({
   const leftComponentsAfterTitle = leftComponents.slice(headerTitlePosition);
 
   return (
-    <header className="flex h-16 justify-start items-center gap-4 border-b bg-background sm:bg-transparent sm:static sm:h-auto sm:border-0 w-full p-4 md:p-6">
+    <header className="flex h-14 justify-start items-center gap-4 border-b bg-background sm:bg-transparent sm:static sm:h-auto sm:border-0 w-full p-2 md:p-4">
       {/* Left section: Previous Page button and custom left components */}
       <div className="flex items-center gap-4">
         {showPreviousPage && <PreviousPage />}
@@ -68,7 +72,7 @@ export default function TitleHeader({
 
         {/* The header title */}
         {headerTitle && (
-          <h1 className="text-lg font-bold md:text-2xl">{headerTitle}</h1>
+          <h1 className={cn("text-lg font-bold md:text-2xl", titleClassName)}>{headerTitle}</h1>
         )}
 
         {/* Render left components that should appear after the title */}

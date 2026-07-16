@@ -219,17 +219,17 @@ export function EditTransactionForm({
   console.log("EditTransactionForm - bookId:", bookId);
   console.log("EditTransactionForm - transaction.book:", transaction.book);
   console.log("EditTransactionForm - transaction.bookDetails:", transaction.bookDetails);
-  
+
   const { cashbook, isCashbookPending } = useGetCashbookById(businessId, bookId);
-  
+
   // Use bookDetails from transaction if available, otherwise use fetched cashbook
   const bookName = transaction.bookDetails?.name || cashbook?.name;
-  
+
   // Debug cashbook
   console.log("EditTransactionForm - cashbook:", cashbook);
   console.log("EditTransactionForm - isCashbookPending:", isCashbookPending);
   console.log("EditTransactionForm - bookName:", bookName);
-  
+
   const { visibleFields, defaultValues } = useTransactionForm();
   const [transactionType, setTransactionType] = useState<
     "cash_in" | "cash_out"
@@ -396,7 +396,7 @@ export function EditTransactionForm({
     });
 
     setUploadedFiles((prev) => [...prev, ...newFiles]);
-    
+
     // If there are image files, open crop modal for the first one
     const firstImageIndex = newFiles.findIndex((f) => f.isImage);
     if (firstImageIndex !== -1) {
@@ -418,7 +418,7 @@ export function EditTransactionForm({
           return;
         }
 
-        const fileToUpload = fileData.croppedUrl 
+        const fileToUpload = fileData.croppedUrl
           ? dataURLtoFile(fileData.croppedUrl, fileData.file.name, fileData.file.type)
           : fileData.file;
 
@@ -475,11 +475,11 @@ export function EditTransactionForm({
     const bstr = atob(arr[arr.length - 1]);
     let n = bstr.length;
     const u8arr = new Uint8Array(n);
-    
+
     while (n--) {
       u8arr[n] = bstr.charCodeAt(n);
     }
-    
+
     return new File([u8arr], filename, { type: mime });
   }
 
@@ -580,7 +580,7 @@ export function EditTransactionForm({
 
       // Upload the cropped file to S3
       const fileToUpload = dataURLtoFile(croppedDataUrl, fileData.file.name, fileData.file.type);
-      
+
       uploadToS3(
         { file: fileToUpload, folder: `transaction` },
         {
@@ -629,7 +629,7 @@ export function EditTransactionForm({
     if (croppingFileIndex === -1) return;
 
     const fileData = uploadedFiles[croppingFileIndex];
-    
+
     if (fileData.file) {
       // Upload original file without cropping
       uploadFilesToS3([fileData]);
@@ -655,11 +655,11 @@ export function EditTransactionForm({
     const filesToUpload = uploadedFiles.filter(
       (file, index) => index >= croppingFileIndex && file.isImage && file.file && !file.uploaded
     );
-    
+
     if (filesToUpload.length > 0) {
       uploadFilesToS3(filesToUpload);
     }
-    
+
     setShowCropModal(false);
     setCroppingFileIndex(-1);
     setCrop(undefined);
@@ -668,12 +668,12 @@ export function EditTransactionForm({
   // Handle form submission
   const handleSubmit = async (values: TransactionFormValues) => {
     console.log("Form values on submit:", values);
-    
+
     // Use original transaction values as fallback for unchanged fields
     const category = values.category?.trim() ? values.category.split("#")[1] : transaction.category?.split("#")[1] || "";
     const paymentMode = values.paymentMode?.trim() ? values.paymentMode.split("#")[1] : transaction.paymentMode?.split("#")[1] || "";
     const partyName = values.partyName?.trim() ? values.partyName.split("#")[1] : transaction.party?.split("#")[1] || "";
-    
+
     const payload: CreateTransactionDto = {
       book: bookId,
       type: transactionType,
@@ -726,9 +726,9 @@ export function EditTransactionForm({
       >
         {/* Add ReactCrop styles inline */}
         <style jsx global>{reactCropStyles}</style>
-        
-        <FormFieldSettings />
-        
+
+        {/* <FormFieldSettings /> */}
+
         {/* Book Name Display */}
         {bookName && (
           <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-md">
@@ -736,17 +736,16 @@ export function EditTransactionForm({
             <span className="text-sm font-medium text-blue-900">{bookName}</span>
           </div>
         )}
-        
+
         {/* Type Toggle Chips */}
         <div className="flex gap-2 mb-6">
           <button
             type="button"
             onClick={() => handleTypeChange("cash_in")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors hover:cursor-pointer ${
-              transactionType === "cash_in"
+            className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors hover:cursor-pointer ${transactionType === "cash_in"
                 ? "bg-green-100 border-green-300 text-green-800"
                 : "bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200"
-            }`}
+              }`}
           >
             <ArrowDownCircle className="h-4 w-4" />
             <span>Cash In</span>
@@ -754,11 +753,10 @@ export function EditTransactionForm({
           <button
             type="button"
             onClick={() => handleTypeChange("cash_out")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors hover:cursor-pointer ${
-              transactionType === "cash_out"
+            className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors hover:cursor-pointer ${transactionType === "cash_out"
                 ? "bg-red-100 border-red-300 text-red-800"
                 : "bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200"
-            }`}
+              }`}
           >
             <ArrowUpCircle className="h-4 w-4" />
             <span>Cash Out</span>
@@ -806,67 +804,67 @@ export function EditTransactionForm({
 
           {/* Category - always visible */}
           <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => {
-                console.log("Category field value:", field.value);
-                console.log("Display name:", getDisplayName(field.value ?? ''));
-                
-                return (
-                  <FormItem>
-                    <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-md bg-gray-100">
-                          <Landmark className="h-4 w-4 text-gray-700" />
-                        </div>
-                        <FormLabel className="text-sm font-medium text-gray-700 flex-1">
-                          Category
-                        </FormLabel>
+            control={form.control}
+            name="category"
+            render={({ field }) => {
+              console.log("Category field value:", field.value);
+              console.log("Display name:", getDisplayName(field.value ?? ''));
+
+              return (
+                <FormItem>
+                  <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-md bg-gray-100">
+                        <Landmark className="h-4 w-4 text-gray-700" />
                       </div>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value || ""}
-                        disabled={isCategoriesPending}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="border-gray-300 focus-visible:ring-1 focus-visible:ring-gray-400 w-full">
-                            <SelectValue>
-                              {getDisplayName(field.value ?? '') || 
-                                (isCategoriesPending
-                                  ? "Loading categories..."
-                                  : "Select a category")}
-                            </SelectValue>
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent
-                          position="popper"
-                          className="border-gray-300 shadow-md"
-                        >
-                          {isCategoriesPending ? (
-                            <div>Loading categories...</div>
-                          ) : categories?.length > 0 ? (
-                            categories?.map((category) => (
-                              <SelectItem
-                                key={category._id}
-                                value={`${category._id}#${category.name}`}
-                                className="hover:bg-gray-100 capitalize "
-                              >
-                                {category.name.toLowerCase()}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <div className="text-sm text-gray-500 p-2">
-                              No categories found
-                            </div>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="text-xs text-red-600" />
+                      <FormLabel className="text-sm font-medium text-gray-700 flex-1">
+                        Category
+                      </FormLabel>
                     </div>
-                  </FormItem>
-                );
-              }}
-            />
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
+                      disabled={isCategoriesPending}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="border-gray-300 focus-visible:ring-1 focus-visible:ring-gray-400 w-full">
+                          <SelectValue>
+                            {getDisplayName(field.value ?? '') ||
+                              (isCategoriesPending
+                                ? "Loading categories..."
+                                : "Select a category")}
+                          </SelectValue>
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent
+                        position="popper"
+                        className="border-gray-300 shadow-md"
+                      >
+                        {isCategoriesPending ? (
+                          <div>Loading categories...</div>
+                        ) : categories?.length > 0 ? (
+                          categories?.map((category) => (
+                            <SelectItem
+                              key={category._id}
+                              value={`${category._id}#${category.name}`}
+                              className="hover:bg-gray-100 capitalize "
+                            >
+                              {category.name.toLowerCase()}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="text-sm text-gray-500 p-2">
+                            No categories found
+                          </div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage className="text-xs text-red-600" />
+                  </div>
+                </FormItem>
+              );
+            }}
+          />
 
           {/* Party Name */}
           {visibleFields.partyName?.visible && (
@@ -876,7 +874,7 @@ export function EditTransactionForm({
               render={({ field }) => {
                 console.log("Party field value:", field.value);
                 console.log("Party display name:", getDisplayName(field.value ?? ''));
-                
+
                 return (
                   <FormItem>
                     <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
@@ -907,7 +905,7 @@ export function EditTransactionForm({
                             className="border-gray-300 focus-visible:ring-1 focus-visible:ring-gray-400 w-full"
                           >
                             <SelectValue>
-                              {getDisplayName(field.value ?? '') || 
+                              {getDisplayName(field.value ?? '') ||
                                 (isPartiesPending
                                   ? "Loading parties..."
                                   : "Select a party")}
@@ -962,67 +960,67 @@ export function EditTransactionForm({
 
           {/* Payment Mode - always visible */}
           <FormField
-              control={form.control}
-              name="paymentMode"
-              render={({ field }) => {
-                console.log("Payment Mode field value:", field.value);
-                console.log("Payment Mode display name:", getDisplayName(field.value ?? ''));
-                
-                return (
-                  <FormItem>
-                    <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-md bg-gray-100">
-                          <CreditCard className="h-4 w-4 text-gray-700" />
-                        </div>
-                        <FormLabel className="text-sm font-medium text-gray-700 flex-1">
-                          Payment Mode
-                        </FormLabel>
+            control={form.control}
+            name="paymentMode"
+            render={({ field }) => {
+              console.log("Payment Mode field value:", field.value);
+              console.log("Payment Mode display name:", getDisplayName(field.value ?? ''));
+
+              return (
+                <FormItem>
+                  <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-md bg-gray-100">
+                        <CreditCard className="h-4 w-4 text-gray-700" />
                       </div>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value || ""}
-                        disabled={isPaymentModesLoading}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="border-gray-300 focus-visible:ring-1 focus-visible:ring-gray-400 w-full">
-                            <SelectValue>
-                              {getDisplayName(field.value ?? '') || 
-                                (isPaymentModesLoading
-                                  ? "Loading payment modes..."
-                                  : "Select payment mode")}
-                            </SelectValue>
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent
-                          position="popper"
-                          className="border-gray-300 shadow-md"
-                        >
-                          {isPaymentModesLoading ? (
-                            <div>Loading payment modes...</div>
-                          ) : paymentModesData?.data?.length ?? 0 > 0 ? (
-                            paymentModesData?.data?.map((mode, idx) => (
-                              <SelectItem
-                                key={idx}
-                                value={`${mode._id}#${mode.name}`}
-                                className="hover:bg-gray-100 capitalize"
-                              >
-                                {mode.name.toLowerCase()}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <div className="text-sm text-gray-500 p-2">
-                              No payment modes found
-                            </div>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="text-xs text-red-600" />
+                      <FormLabel className="text-sm font-medium text-gray-700 flex-1">
+                        Payment Mode
+                      </FormLabel>
                     </div>
-                  </FormItem>
-                );
-              }}
-            />
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
+                      disabled={isPaymentModesLoading}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="border-gray-300 focus-visible:ring-1 focus-visible:ring-gray-400 w-full">
+                          <SelectValue>
+                            {getDisplayName(field.value ?? '') ||
+                              (isPaymentModesLoading
+                                ? "Loading payment modes..."
+                                : "Select payment mode")}
+                          </SelectValue>
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent
+                        position="popper"
+                        className="border-gray-300 shadow-md"
+                      >
+                        {isPaymentModesLoading ? (
+                          <div>Loading payment modes...</div>
+                        ) : paymentModesData?.data?.length ?? 0 > 0 ? (
+                          paymentModesData?.data?.map((mode, idx) => (
+                            <SelectItem
+                              key={idx}
+                              value={`${mode._id}#${mode.name}`}
+                              className="hover:bg-gray-100 capitalize"
+                            >
+                              {mode.name.toLowerCase()}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="text-sm text-gray-500 p-2">
+                            No payment modes found
+                          </div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage className="text-xs text-red-600" />
+                  </div>
+                </FormItem>
+              );
+            }}
+          />
 
           {/* Date */}
           {visibleFields.date?.visible && (
@@ -1179,9 +1177,8 @@ export function EditTransactionForm({
                       }}
                     />
                     <span
-                      className={`text-sm ${
-                        field.value?.length ? "text-gray-700" : "text-gray-500"
-                      }`}
+                      className={`text-sm ${field.value?.length ? "text-gray-700" : "text-gray-500"
+                        }`}
                     >
                       {field.value?.length
                         ? `${field.value.length} file(s) uploaded`
@@ -1206,7 +1203,7 @@ export function EditTransactionForm({
                               {file.isImage ? (
                                 <img
                                   src={file.previewUrl}
-                                  alt={ `Attachment ${index + 1}`}
+                                  alt={`Attachment ${index + 1}`}
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
@@ -1215,13 +1212,13 @@ export function EditTransactionForm({
                                     {file.attachment?.fileType?.includes("pdf")
                                       ? "📄"
                                       : file.attachment?.fileType?.includes("word")
-                                      ? "📝"
-                                      : file.attachment?.fileType?.includes("excel")
-                                      ? "📊"
-                                      : "📎"}
+                                        ? "📝"
+                                        : file.attachment?.fileType?.includes("excel")
+                                          ? "📊"
+                                          : "📎"}
                                   </div>
                                   <span className="text-xs text-center text-gray-600 truncate w-full">
-                                    { `Attachment ${index + 1}`}
+                                    {`Attachment ${index + 1}`}
                                   </span>
                                 </div>
                               )}
@@ -1230,7 +1227,7 @@ export function EditTransactionForm({
                             {/* File Info */}
                             <div className="p-2 bg-white border-t">
                               <div className="flex items-center justify-between">
-                  
+
                                 <div className="flex items-center gap-1">
                                   {file.uploaded && (
                                     <span className="text-[10px] bg-green-100 text-green-800 px-1 rounded">
@@ -1310,9 +1307,8 @@ export function EditTransactionForm({
           >
             {isUpdatingTransaction
               ? "Updating..."
-              : `Update ${
-                  transactionType === "cash_in" ? "Cash In" : "Cash Out"
-                }`}
+              : `Update ${transactionType === "cash_in" ? "Cash In" : "Cash Out"
+              }`}
           </Button>
         </div>
       </form>
@@ -1323,7 +1319,7 @@ export function EditTransactionForm({
           <DialogHeader>
             <DialogTitle>
               {selectedFileIndex !== -1 &&
-                ( `Attachment ${selectedFileIndex + 1}`)}
+                (`Attachment ${selectedFileIndex + 1}`)}
             </DialogTitle>
           </DialogHeader>
           {selectedFileIndex !== -1 &&
@@ -1397,14 +1393,14 @@ export function EditTransactionForm({
                   />
                 </ReactCrop>
               </div>
-              
+
               <div className="text-sm text-gray-600">
                 <p>Image: {uploadedFiles[croppingFileIndex].file?.name}</p>
                 <p>Size: {(uploadedFiles[croppingFileIndex].file?.size || 0 / 1024 / 1024).toFixed(2)} MB</p>
               </div>
             </div>
           )}
-          
+
           <DialogFooter className="gap-2 sm:gap-0 flex-col sm:flex-row">
             <div className="flex gap-2">
               <Button
@@ -1463,7 +1459,7 @@ const RedirectToSettingBtn = ({
   const url = `${paths.dashboard.business.root}/${businessId}/${bookId}/fields/${slug}`;
   console.log("RedirectToSettingBtn - URL:", url);
   console.log("RedirectToSettingBtn - businessId:", businessId, "bookId:", bookId, "slug:", slug);
-  
+
   return (
     <Link
       href={url}

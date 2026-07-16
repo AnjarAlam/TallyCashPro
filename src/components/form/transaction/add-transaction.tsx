@@ -5,6 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import {
   ArrowDownCircle,
+  ArrowDown,
+  ArrowUp,
   ArrowRight,
   ArrowUpCircle,
   CalendarIcon,
@@ -17,6 +19,7 @@ import {
   Settings,
   User,
   X,
+  Search,
   Eye,
   Trash2,
   Crop,
@@ -197,6 +200,11 @@ export function AddTransactionForm({
       });
     };
   }, []);
+
+  // Sync local transactionType state when type prop changes
+  useEffect(() => {
+    setTransactionType(type);
+  }, [type]);
 
   // Refetch categories when transaction type changes
   useEffect(() => {
@@ -678,24 +686,26 @@ export function AddTransactionForm({
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-          <FormFieldSettings />
+          {/* <FormFieldSettings /> */}
 
           {/* Book Name Display */}
-          {cashbook?.name && (
+
+          {/* {cashbook?.name && (
             <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-md">
               <Landmark className="h-4 w-4 text-blue-700" />
               <span className="text-sm font-medium text-blue-900">{cashbook.name}</span>
             </div>
-          )}
+          )} */}
 
           {/* Type Toggle Chips */}
-          <div className="flex gap-2 mb-6">
+
+          {/* <div className="flex gap-2 mb-6">
             <button
               type="button"
               onClick={() => handleTypeChange("cash_in")}
               className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors hover:cursor-pointer ${transactionType === "cash_in"
-                  ? "bg-green-100 border-green-300 text-green-800"
-                  : "bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200"
+                ? "bg-green-100 border-green-300 text-green-800"
+                : "bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200"
                 }`}
             >
               <ArrowDownCircle className="h-4 w-4" />
@@ -705,49 +715,43 @@ export function AddTransactionForm({
               type="button"
               onClick={() => handleTypeChange("cash_out")}
               className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors hover:cursor-pointer ${transactionType === "cash_out"
-                  ? "bg-red-100 border-red-300 text-red-800"
-                  : "bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200"
+                ? "bg-red-100 border-red-300 text-red-800"
+                : "bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200"
                 }`}
             >
               <ArrowUpCircle className="h-4 w-4" />
               <span>Cash Out</span>
             </button>
-          </div>
+          </div> */}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col bg-white overflow-hidden shadow-sm divide-y divide-gray-100">
             {/* Amount */}
             <FormField
               control={form.control}
               name="amount"
               render={({ field }) => (
-                <FormItem>
-                  <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-md bg-gray-100">
-                        <IndianRupee className="h-4 w-4 text-gray-700" />
+                <FormItem className="space-y-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_2.2fr] gap-2 sm:gap-4 py-3 sm:py-4 px-4 sm:px-6 items-start sm:items-center">
+                    <FormLabel className="text-xs font-bold text-gray-700 sm:py-2">
+                      Amount
+                    </FormLabel>
+                    <div>
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          placeholder="Enter Here"
+                          className="border-slate-200 focus-visible:ring-blue-500 rounded-xl h-10 text-xs font-semibold text-slate-800"
+                          value={field.value ?? ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange(
+                              value === "" ? undefined : Number(value)
+                            );
+                          }}
+                        />
                       </div>
-                      <FormLabel className="text-sm font-medium text-gray-700 flex-1">
-                        Amount *
-                      </FormLabel>
+                      <FormMessage className="text-xs text-red-600 mt-1" />
                     </div>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                        ₹
-                      </span>
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        className="pl-8 border-gray-300 focus-visible:ring-1 focus-visible:ring-gray-400"
-                        value={field.value ?? ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(
-                            value === "" ? undefined : Number(value)
-                          );
-                        }}
-                      />
-                    </div>
-                    <FormMessage className="text-xs text-red-600" />
                   </div>
                 </FormItem>
               )}
@@ -758,64 +762,42 @@ export function AddTransactionForm({
               control={form.control}
               name="category"
               render={({ field }) => (
-                <FormItem className="relative">
-                  <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
-                    <div className="flex items-center gap-3 w-full">
-                      <div className="p-2 rounded-md bg-gray-100">
-                        <Landmark className="h-4 w-4 text-gray-700" />
-                      </div>
-                      <FormLabel className="text-sm font-medium text-gray-700 flex-1">
-                        Category
-                      </FormLabel>
-                      <RedirectToSettingBtn
-                        businessId={businessId}
-                        bookId={bookId}
-                        slug="category"
-                      />
+                <FormItem className="space-y-0">
+                  <div className="flex flex-col gap-2 py-4 px-6 bg-white">
+                    <FormLabel className="text-xs font-bold text-gray-700">
+                      Category
+                    </FormLabel>
+                    <div>
+                      {isCategoriesPending ? (
+                        <div className="flex items-center justify-start py-1">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />
+                          <span className="text-xs text-slate-400 ml-2">Loading categories...</span>
+                        </div>
+                      ) : categories && categories.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {categories.map((category) => {
+                            const isSelected = field.value === `${category._id}#${category.name}`;
+                            return (
+                              <button
+                                key={category._id}
+                                type="button"
+                                onClick={() => field.onChange(`${category._id}#${category.name}`)}
+                                className={`px-4.5 py-2.5 rounded-[12px] text-xs font-semibold transition-all border ${
+                                  isSelected
+                                    ? "bg-[#EEF3FF] text-[#3B82F6] border-[#3B82F6] shadow-sm font-bold"
+                                    : "bg-[#F3F4F9] text-gray-700 border-transparent hover:bg-gray-200/60"
+                                }`}
+                              >
+                                {category.name}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-500 py-1">No categories found</div>
+                      )}
+                      <FormMessage className="text-xs text-red-600 mt-1" />
                     </div>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value || ""}
-                      disabled={isCategoriesPending}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="border-gray-300 focus-visible:ring-1 focus-visible:ring-gray-400 w-full">
-                          <SelectValue
-                            placeholder={
-                              isCategoriesPending
-                                ? "Loading categories..."
-                                : "Select a category"
-                            }
-                          />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent
-                        align="center"
-                        position="item-aligned"
-                        className="z-[9999] border-gray-300 shadow-md max-h-60"
-                      >
-                        {isCategoriesPending ? (
-                          <div className="flex items-center justify-center p-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          </div>
-                        ) : categories && categories.length > 0 ? (
-                          categories.map((category) => (
-                            <SelectItem
-                              key={category._id}
-                              value={`${category._id}#${category.name}`}
-                              className="hover:bg-gray-100 capitalize"
-                            >
-                              {category.name.toLowerCase()}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <div className="p-2 text-sm text-gray-500">
-                            No categories found
-                          </div>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className="text-xs text-red-600" />
                   </div>
                 </FormItem>
               )}
@@ -827,31 +809,35 @@ export function AddTransactionForm({
                 control={form.control}
                 name="partyName"
                 render={({ field }) => (
-                  <FormItem>
-                    <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-md bg-gray-100">
-                          <User className="h-4 w-4 text-gray-700" />
-                        </div>
-                        <FormLabel className="text-sm font-medium text-gray-700 flex-1">
-                          Party Name
-                        </FormLabel>
-                        {field.value && (
-                          <IconBox
-                            containerClass="bg-destructive hover:bg-destructive/90 cursor-pointer"
-                            icon={X}
-                            iconClass="text-white"
-                            onClick={() => field.onChange("")}
-                          />
-                        )}
-                      </div>
-                      <div className="w-full">
+                  <FormItem className="space-y-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_2.2fr] gap-2 sm:gap-4 py-3 sm:py-4 px-4 sm:px-6 items-start sm:items-center bg-white">
+                      <FormLabel className="text-xs font-bold text-gray-700 sm:py-2">
+                        Party Name
+                      </FormLabel>
+                      <div>
                         <FormControl>
                           <SheetLayoutComp
                             triggerContent={
-                              <div className="flex justify-between items-center border border-gray-300 focus-visible:ring-1 focus-visible:ring-gray-400 w-full p-2 rounded-sm text-xs font-bold">
-                                {field.value ? field.value : "Select Party"}
-                                <ArrowRight className="w-5 h-5" />
+                              <div className="relative w-full cursor-pointer">
+                                <Input
+                                  type="text"
+                                  readOnly
+                                  placeholder="Search"
+                                  value={field.value || ""}
+                                  className="w-full border-slate-200 focus-visible:ring-blue-500 rounded-xl h-10 text-xs font-semibold text-slate-800 pr-10 cursor-pointer"
+                                />
+                                {field.value && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      field.onChange("");
+                                    }}
+                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
                               </div>
                             }
                             sheetTitle="Parties"
@@ -863,8 +849,8 @@ export function AddTransactionForm({
                             />
                           </SheetLayoutComp>
                         </FormControl>
+                        <FormMessage className="text-xs text-red-600 mt-1" />
                       </div>
-                      <FormMessage className="text-xs text-red-600" />
                     </div>
                   </FormItem>
                 )}
@@ -876,64 +862,42 @@ export function AddTransactionForm({
               control={form.control}
               name="paymentMode"
               render={({ field }) => (
-                <FormItem>
-                  <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-md bg-gray-100">
-                        <CreditCard className="h-4 w-4 text-gray-700" />
-                      </div>
-                      <FormLabel className="text-sm font-medium text-gray-700 flex-1">
-                        Payment Mode
-                      </FormLabel>
-                      <RedirectToSettingBtn
-                        businessId={businessId}
-                        bookId={bookId}
-                        slug="payment-mode"
-                      />
+                <FormItem className="space-y-0">
+                  <div className="flex flex-col gap-2 py-4 px-6 bg-white">
+                    <FormLabel className="text-xs font-bold text-gray-700">
+                      Payment Mode
+                    </FormLabel>
+                    <div>
+                      {isPaymentModesLoading ? (
+                        <div className="flex items-center justify-start py-1">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />
+                          <span className="text-xs text-slate-400 ml-2">Loading modes...</span>
+                        </div>
+                      ) : paymentModesData?.data && paymentModesData.data.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {paymentModesData.data.map((mode) => {
+                            const isSelected = field.value === `${mode._id}#${mode.name}`;
+                            return (
+                              <button
+                                key={mode._id}
+                                type="button"
+                                onClick={() => field.onChange(`${mode._id}#${mode.name}`)}
+                                className={`px-4.5 py-2.5 rounded-[12px] text-xs font-semibold transition-all border ${
+                                  isSelected
+                                    ? "bg-[#EEF3FF] text-[#3B82F6] border-[#3B82F6] shadow-sm font-bold"
+                                    : "bg-[#F3F4F9] text-gray-700 border-transparent hover:bg-gray-200/60"
+                                }`}
+                              >
+                                {mode.name}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-500 py-1">No payment modes found</div>
+                      )}
+                      <FormMessage className="text-xs text-red-600 mt-1" />
                     </div>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value || ""}
-                      disabled={isPaymentModesLoading}
-                    >
-                      <FormControl>
-                        <SelectTrigger onClick={() => alert("CLICKED")} className="border-gray-300 focus-visible:ring-1 focus-visible:ring-gray-400 w-full">
-                          <SelectValue
-                            placeholder={
-                              isPaymentModesLoading
-                                ? "Loading payment modes..."
-                                : "Select payment mode"
-                            }
-                          />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent
-                        align="center"
-                        position="item-aligned"
-                        className="z-[9999] border-gray-300 shadow-md max-h-60"
-                      >
-                        {isPaymentModesLoading ? (
-                          <div className="flex items-center justify-center p-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          </div>
-                        ) : paymentModesData?.data && paymentModesData.data.length > 0 ? (
-                          paymentModesData.data.map((mode) => (
-                            <SelectItem
-                              key={mode._id}
-                              value={`${mode._id}#${mode.name}`}
-                              className="hover:bg-gray-100 capitalize"
-                            >
-                              {mode.name.toLowerCase()}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <div className="p-2 text-sm text-gray-500">
-                            No payment modes found
-                          </div>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className="text-xs text-red-600" />
                   </div>
                 </FormItem>
               )}
@@ -945,304 +909,249 @@ export function AddTransactionForm({
                 control={form.control}
                 name="date"
                 render={({ field }) => (
-                  <FormItem>
-                    <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-md bg-gray-100">
-                          <CalendarIcon className="h-4 w-4 text-gray-700" />
-                        </div>
-                        <FormLabel className="text-sm font-medium text-gray-700 flex-1">
-                          Date *
-                        </FormLabel>
+                  <FormItem className="space-y-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_2.2fr] gap-2 sm:gap-4 py-3 sm:py-4 px-4 sm:px-6 items-start sm:items-center bg-white">
+                      <FormLabel className="text-xs font-bold text-gray-700 sm:py-2">
+                        Date *
+                      </FormLabel>
+                      <div>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal border-slate-200 focus-visible:ring-1 focus-visible:ring-blue-500 rounded-xl h-10 text-xs font-semibold text-slate-800 hover:bg-slate-50",
+                                  !field.value && "text-gray-500"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0 border-gray-200 shadow-md">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) => date > new Date()}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage className="text-xs text-red-600 mt-1" />
                       </div>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-full justify-start text-left font-normal border-gray-300 hover:bg-gray-50 focus-visible:ring-1 focus-visible:ring-gray-400",
-                                !field.value && "text-gray-500"
-                              )}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4 text-gray-500" />
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 border-gray-300 shadow-md">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) => date > new Date()}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage className="text-xs text-red-600" />
+                    </div>
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Description (Additional Information) */}
+            {visibleFields.otherDetail?.visible && (
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem className="space-y-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_2.2fr] gap-2 sm:gap-4 py-3 sm:py-4 px-4 sm:px-6 items-start bg-white">
+                      <FormLabel className="text-xs font-bold text-gray-700 sm:pt-2.5">
+                        Additional Information
+                      </FormLabel>
+                      <div>
+                        <Textarea
+                          placeholder="Enter Here"
+                          className="min-h-[90px] border-slate-200 focus-visible:ring-blue-500 rounded-xl text-xs font-medium resize-none"
+                          {...field}
+                        />
+                        <FormMessage className="text-xs text-red-600 mt-1" />
+                      </div>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Remarks */}
+            {visibleFields.remark?.visible && (
+              <FormField
+                control={form.control}
+                name="remark"
+                render={({ field }) => (
+                  <FormItem className="space-y-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_2.2fr] gap-2 sm:gap-4 py-3 sm:py-4 px-4 sm:px-6 items-start bg-white">
+                      <FormLabel className="text-xs font-bold text-gray-700 sm:pt-2.5">
+                        Remarks <span className="text-[10px] font-normal text-gray-400 italic ml-1">(Optional)</span>
+                      </FormLabel>
+                      <div>
+                        <Textarea
+                          placeholder="Enter Here"
+                          className="min-h-[90px] border-slate-200 focus-visible:ring-blue-500 rounded-xl text-xs font-medium resize-none"
+                          {...field}
+                        />
+                        <FormMessage className="text-xs text-red-600 mt-1" />
+                      </div>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Attachments Section */}
+            {visibleFields.attachments?.visible && (
+              <FormField
+                control={form.control}
+                name="attachments"
+                render={({ field }) => (
+                  <FormItem className="space-y-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_2.2fr] gap-2 sm:gap-4 py-3 sm:py-4 px-4 sm:px-6 items-start bg-white">
+                      <FormLabel className="text-xs font-bold text-gray-700 sm:pt-2.5">
+                        Attachment
+                      </FormLabel>
+                      <div className="w-full">
+                        {/* Custom File Upload Input */}
+                        <div
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full border border-dashed border-blue-400 rounded-xl bg-blue-50/10 hover:bg-blue-50/20 p-1 px-4.5 h-10 flex items-center cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center gap-1.5 text-blue-600 font-bold text-xs border-r border-blue-100 pr-4 mr-4">
+                            <Upload className="w-4 h-4" />
+                            <span>Choose File</span>
+                          </div>
+                          <span className="text-xs text-slate-500 font-semibold truncate flex-1">
+                            {uploadedFiles.length > 0
+                              ? `${uploadedFiles.length} file(s) selected`
+                              : "No file choosen"}
+                          </span>
+                        </div>
+                        <Input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          className="hidden"
+                          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                          onChange={(e) => {
+                            const files = e.target.files;
+                            if (files && files.length > 0) {
+                              handleFileSelect(files);
+                            }
+                            if (e.target) {
+                              e.target.value = "";
+                            }
+                          }}
+                        />
+
+                        {/* Uploaded Files Preview Grid */}
+                        {uploadedFiles.length > 0 && (
+                          <div className="mt-3 space-y-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {uploadedFiles.map((file, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between p-2 bg-gray-50 border border-gray-100 rounded-lg group"
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    {file.isImage ? (
+                                      <div
+                                        className="relative w-8 h-8 rounded border border-gray-200 overflow-hidden cursor-pointer"
+                                        onClick={() => viewFile(index)}
+                                      >
+                                        <img
+                                          src={file.croppedUrl || file.previewUrl}
+                                          alt="Preview"
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            e.currentTarget.src = "/icons/image-icon.svg";
+                                          }}
+                                        />
+                                      </div>
+                                    ) : (
+                                      <div className="w-8 h-8 rounded bg-blue-50 border border-blue-100 flex items-center justify-center">
+                                        <FileText className="h-4 w-4 text-blue-500" />
+                                      </div>
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-xs font-bold text-gray-700 truncate">
+                                        {file.file.name}
+                                      </p>
+                                      <p className="text-[10px] text-gray-400">
+                                        {(file.file.size / 1024).toFixed(1)} KB
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {file.isImage && !file.uploaded && (
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="secondary"
+                                        className="h-7 w-7 p-0 bg-white hover:bg-gray-100 border"
+                                        onClick={() => openCropModal(index)}
+                                        title="Crop Image"
+                                      >
+                                        <Crop className="h-3.5 h-3.5 text-gray-600" />
+                                      </Button>
+                                    )}
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="secondary"
+                                      className="h-7 w-7 p-0 bg-white hover:bg-gray-100 border text-red-500 hover:text-red-700"
+                                      onClick={() => removeFile(index)}
+                                      title="Remove File"
+                                    >
+                                      <Trash2 className="h-3.5 h-3.5" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <FormMessage className="text-xs text-red-600 mt-1" />
+                      </div>
                     </div>
                   </FormItem>
                 )}
               />
             )}
           </div>
-
-          {/* Other Details */}
-          {visibleFields.otherDetail?.visible && (
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-md bg-gray-100">
-                        <FileText className="h-4 w-4 text-gray-700" />
-                      </div>
-                      <FormLabel className="text-sm font-medium text-gray-700 flex-1">
-                        Other Details (Optional)
-                      </FormLabel>
-                    </div>
-                    <Textarea
-                      placeholder="Additional details..."
-                      className="min-h-[100px] border-gray-300 focus-visible:ring-1 focus-visible:ring-gray-400"
-                      {...field}
-                    />
-                    <FormMessage className="text-xs text-red-600" />
-                  </div>
-                </FormItem>
-              )}
-            />
-          )}
-
-          {/* Remarks */}
-          {visibleFields.remark?.visible && (
-            <FormField
-              control={form.control}
-              name="remark"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-md bg-gray-100">
-                        <MessageSquare className="h-4 w-4 text-gray-700" />
-                      </div>
-                      <FormLabel className="text-sm font-medium text-gray-700 flex-1">
-                        Remarks
-                      </FormLabel>
-                    </div>
-                    <Textarea
-                      placeholder="Any remarks..."
-                      className="min-h-[100px] border-gray-300 focus-visible:ring-1 focus-visible:ring-gray-400"
-                      {...field}
-                    />
-                    <FormMessage className="text-xs text-red-600" />
-                  </div>
-                </FormItem>
-              )}
-            />
-          )}
-
-          {/* Attachments Section - FIXED */}
-          {visibleFields.attachments?.visible && (
-            <FormField
-              control={form.control}
-              name="attachments"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-md bg-gray-100">
-                        <Paperclip className="h-4 w-4 text-gray-700" />
-                      </div>
-                      <FormLabel className="text-sm font-medium text-gray-700 flex-1">
-                        Attachments
-                      </FormLabel>
-                    </div>
-
-                    {/* Upload Button */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="gap-2 border-gray-300 hover:bg-gray-50 focus-visible:ring-1 focus-visible:ring-gray-400"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                      >
-                        <Paperclip className="h-4 w-4 text-gray-500" />
-                        {isUploading ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Uploading...
-                          </>
-                        ) : (
-                          "Upload Files"
-                        )}
-                      </Button>
-                      <Input
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        className="hidden"
-                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-                        onChange={(e) => {
-                          const files = e.target.files;
-                          if (files && files.length > 0) {
-                            handleFileSelect(files);
-                          }
-                          if (e.target) {
-                            e.target.value = "";
-                          }
-                        }}
-                      />
-                      <span
-                        className={`text-sm ${field.value?.length ? "text-gray-700" : "text-gray-500"
-                          }`}
-                      >
-                        {field.value?.length
-                          ? `${field.value.length} file(s) uploaded`
-                          : "No files uploaded"}
-                      </span>
-                    </div>
-
-                    {/* File Previews - FIXED */}
-                    {uploadedFiles.length > 0 && (
-                      <div className="mt-4">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">
-                          Uploaded Files:
-                        </h4>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                          {uploadedFiles.map((file, index) => (
-                            <div
-                              key={index}
-                              className="relative border rounded-lg overflow-hidden bg-gray-50 group"
-                            >
-                              {/* File Preview */}
-                              <div className="aspect-square flex items-center justify-center">
-                                {file.isImage ? (
-                                  <img
-                                    src={file.previewUrl}
-                                    alt={file.file.name}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      e.currentTarget.src = "/icons/image-icon.svg";
-                                    }}
-                                  />
-                                ) : (
-                                  <div className="flex flex-col items-center justify-center p-4">
-                                    <div className="text-gray-400 mb-2">
-                                      {file.file.type.includes("pdf")
-                                        ? "📄"
-                                        : file.file.type.includes("word")
-                                          ? "📝"
-                                          : file.file.type.includes("excel")
-                                            ? "📊"
-                                            : "📎"}
-                                    </div>
-                                    <span className="text-xs text-center text-gray-600 truncate w-full">
-                                      {file.file.name}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* File Info */}
-                              <div className="p-2 bg-white border-t">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-xs text-gray-600 truncate flex-1">
-                                    {file.file.name.length > 20
-                                      ? `${file.file.name.substring(0, 15)}...${file.file.name.split('.').pop()}`
-                                      : file.file.name}
-                                  </span>
-                                  <div className="flex items-center gap-1">
-                                    {file.uploaded && (
-                                      <span className="text-[10px] bg-green-100 text-green-800 px-1 rounded">
-                                        ✓
-                                      </span>
-                                    )}
-                                    {file.croppedUrl && (
-                                      <span className="text-[10px] bg-blue-100 text-blue-800 px-1 rounded">
-                                        ✂️
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Action Buttons */}
-                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                                {file.isImage && !file.uploaded && (
-                                  <>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="secondary"
-                                      className="h-8 w-8 p-0 bg-white hover:bg-gray-100"
-                                      onClick={() => openCropModal(index)}
-                                      title="Crop Image"
-                                    >
-                                      <Crop className="h-3 w-3" />
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="secondary"
-                                      className="h-8 w-8 p-0 bg-white hover:bg-gray-100"
-                                      onClick={() => viewFile(index)}
-                                      title="View Image"
-                                    >
-                                      <Eye className="h-3 w-3" />
-                                    </Button>
-                                  </>
-                                )}
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="secondary"
-                                  className="h-8 w-8 p-0 bg-white hover:bg-gray-100"
-                                  onClick={() => removeFile(index)}
-                                  title="Remove File"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="text-xs text-gray-500 mt-2">
-                      Supported formats: JPG, PNG, PDF, DOC, XLS (max 5MB each)
-                    </div>
-                    <FormMessage className="text-xs text-red-600" />
-                  </div>
-                </FormItem>
-              )}
-            />
-          )}
-
-          <div className="flex justify-end pt-4">
+          <div className="w-full px-6 pb-1">
             <Button
               type="submit"
               disabled={isCreatingTransaction || isUploading}
-              className="px-6 py-2 rounded-md shadow-sm text-white bg-gray-800 hover:bg-gray-700"
+              className={`w-full h-10 rounded-[14px] shadow-sm text-white font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer ${
+                transactionType === "cash_in"
+                  ? "bg-[#43AF51] hover:bg-[#3d9f49]"
+                  : "bg-[#C54E4E] hover:bg-[#b04646]"
+              }`}
             >
               {isCreatingTransaction ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing...
+                  <Loader2 className="h-3 w-3 mr-2 animate-spin text-white" />
+                  <span>Processing...</span>
                 </>
               ) : (
-                `Add ${transactionType === "cash_in" ? "Cash In" : "Cash Out"}`
+                <>
+                  {transactionType === "cash_in" ? (
+                    <span className="w-4 h-4 bg-white rounded-full flex items-center justify-center text-[#43AF51]">
+                      <ArrowDown className="w-3 h-3 stroke-[3.5]" />
+                    </span>
+                  ) : (
+                    <span className="w-4 h-4 bg-white rounded-full flex items-center justify-center text-[#C54E4E]">
+                      <ArrowUp className="w-3 h-3 stroke-[3.5]" />
+                    </span>
+                  )}
+                  <span>Add {transactionType === "cash_in" ? "Cash In" : "Cash Out"}</span>
+                </>
               )}
             </Button>
           </div>
+
         </form>
       </Form>
 

@@ -32,7 +32,7 @@ function CashbookSheetContent({ businessId }: { businessId: string }) {
   const { setOpen } = useSheetControls();
 
   return (
-    <AddCashbookForm businessId={businessId} onClose={() => setOpen(false)} />
+    <AddCashbookForm businessId={businessId} showHeader={false} onClose={() => setOpen(false)} />
   );
 }
 export default CashbookSheet;

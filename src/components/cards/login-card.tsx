@@ -20,7 +20,9 @@ export default function LoginCard({}: Props) {
             />
           </div>
         </div>
-        <CardTitle className="text-3xl font-bold">TallyCash Pro</CardTitle>
+        <CardTitle className="text-3xl font-bold">
+          TallyCash<span className="text-[#10b981]">Pro</span>
+        </CardTitle>
         <CardDescription className="text-gray-500 dark:text-gray-400">
           Sign in or create account
         </CardDescription>
