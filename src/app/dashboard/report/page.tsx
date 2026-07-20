@@ -318,8 +318,8 @@ export default function ReportsPage() {
 
   const leftPaneContent = (
     <div className="space-y-4">
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
-        <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 mx-[-10px] md:mx-[-16px] mt-[-10px]">
+        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
           Reports
         </h1>
       </div>
@@ -340,7 +340,7 @@ export default function ReportsPage() {
       </div>
 
       <div className="divide-y divide-slate-100 dark:divide-slate-850 border-b border-slate-100 dark:border-slate-850">
-        <div
+        {/* <div
           onClick={() => {
             setSelectedReportType("business");
             setIsMobileBookListOpen(false);
@@ -371,7 +371,7 @@ export default function ReportsPage() {
           {selectedReportType === "business" && (
             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#3B82F6] rounded-l-full" />
           )}
-        </div>
+        </div> */}
 
         <div className="py-1 space-y-1">
           <div
@@ -460,7 +460,7 @@ export default function ReportsPage() {
           </SheetContent>
         </Sheet>
 
-        <div className="col-span-12 lg:col-span-9 p-4 sm:p-6 space-y-6">
+        <div className="col-span-12 lg:col-span-9 p-4 sm:p-6 space-y-5 mx-[-12px] md:mx-[-22px] mt-[-10px]">
           {/* Mobile Selector Trigger */}
           <div className="lg:hidden">
             <Button
@@ -487,9 +487,9 @@ export default function ReportsPage() {
             </div>
           ) : (
             <>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
-            <div className="flex items-center gap-2.5">
-              <div className="p-3 bg-[#3B82F6] text-white rounded-full flex items-center justify-center shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200">
+            <div className="flex items-center gap-2.5 mx-[8px]">
+              <div className="p-2 bg-[#3B82F6] text-white rounded-full flex items-center justify-center shadow-xs">
                 {selectedReportType === "business" ? (
                   <BriefcaseBusiness className="h-5 w-5" />
                 ) : (
@@ -504,7 +504,7 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 ">
               <Button
                 variant="ghost"
                 className="bg-[#F3F4F6] hover:bg-[#E5E7EB] dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-[12px] px-3 h-8 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
@@ -527,10 +527,10 @@ export default function ReportsPage() {
           </div>
 
           <div>
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+            <div className="bg-white dark:bg-slate-900 space-y-2 mx-[-2px]">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 border-b pb-2 border-slate-200 dark:border-slate-800/80 mt-[-10px]">
 
-                <div className="space-y-1">
+                <div className="space-y-1 mx-[10px]">
                   <label className="text-[9px] font-bold text-slate-700 dark:text-slate-350 uppercase tracking-wider pl-0.5">
                     Business Name
                   </label>
@@ -624,9 +624,9 @@ export default function ReportsPage() {
               </div>
 
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 border-t border-slate-100 dark:border-slate-800/80 pt-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 border-b pb-2 border-slate-200 dark:border-slate-800/80 ">
 
-                <div className="space-y-1">
+                <div className="space-y-1 mx-[10px]">
                   <label className="text-[9px] font-bold text-slate-700 dark:text-slate-355 uppercase tracking-wider pl-0.5">
                     Transaction Type
                   </label>
@@ -716,7 +716,7 @@ export default function ReportsPage() {
           </div>
 
           {/* Stats Summary Cards Section */}
-          <div className="space-y-2">
+          <div className="space-y-2 mx-[10px] mt-[-10px]">
             <div className="flex items-center justify-between pl-1">
               <p className="text-[10px] font-bold text-slate-800 dark:text-slate-200">
                 {selectedReportType === "business"
@@ -759,9 +759,9 @@ export default function ReportsPage() {
 
           {/* Transactions Ledger List Section */}
           <div>
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs space-y-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs space-y-4 mx-[10px]">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-                <h3 className="text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                <h3 className="text-[12px] font-bold text-slate-800 dark:text-slate-200">
                   Transactions Ledger ({selectedReportType === "business" ? "Active Book" : activeBookName})
                 </h3>
                 <span className="text-[9px] text-slate-400 font-medium">
@@ -779,16 +779,16 @@ export default function ReportsPage() {
                   No transactions found for the selected period.
                 </div>
               ) : (
-                <div className="overflow-x-auto select-none">
+                <div className="overflow-y-auto max-h-[255px] overflow-x-auto custom-scrollbar pr-1 select-none">
                   <table className="w-full text-left border-collapse min-w-[500px]">
                     <thead>
-                      <tr className="border-b border-slate-150 dark:border-slate-800 text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                        <th className="pb-2 font-bold">Date & Time</th>
-                        <th className="pb-2 font-bold">Party</th>
-                        <th className="pb-2 font-bold">Category</th>
-                        <th className="pb-2 font-bold">Payment Mode</th>
-                        <th className="pb-2 font-bold">Remark</th>
-                        <th className="pb-2 font-bold text-right">Amount</th>
+                      <tr className="border-b border-slate-150 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        <th className="pb-2 font-bold bg-white dark:bg-slate-900 sticky top-0 z-10">Date & Time</th>
+                        <th className="pb-2 font-bold bg-white dark:bg-slate-900 sticky top-0 z-10">Party</th>
+                        <th className="pb-2 font-bold bg-white dark:bg-slate-900 sticky top-0 z-10">Category</th>
+                        <th className="pb-2 font-bold bg-white dark:bg-slate-900 sticky top-0 z-10">Payment Mode</th>
+                        <th className="pb-2 font-bold bg-white dark:bg-slate-900 sticky top-0 z-10">Remark</th>
+                        <th className="pb-2 font-bold text-right bg-white dark:bg-slate-900 sticky top-0 z-10">Amount</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40 text-[10px]">

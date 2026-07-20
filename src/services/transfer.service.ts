@@ -152,9 +152,6 @@ export const useCreateTransfer = () => {
       
       // Show success message
       toast.success(data.message || "Transfer created successfully. Awaiting approval.");
-      if (typeof window !== "undefined") {
-        window.location.reload();
-      }
     },
     onError: (error: any) => {
       // Show error message with proper error handling
@@ -198,9 +195,6 @@ export const useApproveTransfer = () => {
       
       // Show success message
       toast.success(data.message || "Transfer approved successfully");
-      if (typeof window !== "undefined") {
-        window.location.reload();
-      }
     },
     onError: (error: any) => {
       const errorMessage = error.response?.data?.message || 
@@ -243,9 +237,6 @@ export const useRejectTransfer = () => {
       
       // Show success message
       toast.success(data.message || "Transfer rejected successfully");
-      if (typeof window !== "undefined") {
-        window.location.reload();
-      }
     },
     onError: (error: any) => {
       const errorMessage = error.response?.data?.message || 

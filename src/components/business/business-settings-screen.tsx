@@ -19,8 +19,7 @@ import { useGetCashbookList } from "@/services/cashbook.service";
 import { useCompanyMemberRole } from "@/services/check-role.service";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardFooter } from "@/components/ui/card";
 import { DeleteConfirmationForm, EditBusinessForm } from "@/components/form";
 import ModalLayout from "@/components/modals/modal-layout";
@@ -258,18 +257,15 @@ export function BusinessSettingsScreen({ businessId }: BusinessSettingsScreenPro
       </div>
 
       {permissions.canEdit && company ? (
-        <Sheet open={openEditSheet} onOpenChange={setOpenEditSheet}>
-          <SheetContent
-            side="right"
-            className="overflow-y-auto pb-4 w-full sm:min-w-1/2 lg:min-w-1/3"
-          >
+        <Dialog open={openEditSheet} onOpenChange={setOpenEditSheet}>
+          <DialogContent className="w-[92%] sm:min-w-[536px] max-h-[90vh] overflow-y-auto p-5 bg-white rounded-2xl border border-slate-200/50 shadow-2xl scrollbar-none">
             <DialogTitle className="sr-only">Edit business</DialogTitle>
             <EditBusinessForm
               onClose={() => setOpenEditSheet(false)}
               business={company}
             />
-          </SheetContent>
-        </Sheet>
+          </DialogContent>
+        </Dialog>
       ) : null}
 
       {permissions.canDelete && company ? (

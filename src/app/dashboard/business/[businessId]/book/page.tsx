@@ -93,18 +93,26 @@ import {
   Settings,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 
 export default function BookPage() {
   const params = useParams();
+  const router = useRouter();
   const businessId = params.businessId as string;
   const { setCashbook } = useBusiness();
   const { user } = useAuth();
   const token = user?.accessToken || "";
   const { verifyTransaction, isVerifyingTransaction } = useVerifyTransaction();
+
+  // Redirect if businessId is null or undefined string
+  useEffect(() => {
+    if (!businessId || businessId === "null" || businessId === "undefined") {
+      router.replace("/dashboard/business");
+    }
+  }, [businessId, router]);
 
   // Active book state
   const [activeBookId, setActiveBookId] = useState<string>("");
@@ -112,10 +120,12 @@ export default function BookPage() {
 
   // Search & Filter State
   const [searchText, setSearchText] = useState("");
+  const [bookSearchText, setBookSearchText] = useState("");
   const [dateFilterType, setDateFilterType] = useState<"all" | "today" | "yesterday" | "week" | "month" | "custom">("all");
   const [customDateRange, setCustomDateRange] = useState<{ from: string; to: string }>({ from: "", to: "" });
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedPaymentMode, setSelectedPaymentMode] = useState<string>("all");
+  const [selectedParty, setSelectedParty] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<string>("all");
 
   // Dialog & Panel States
@@ -249,19 +259,23 @@ export default function BookPage() {
     if (!transactions) return [];
     return transactions.filter((tx) => {
       const searchLower = searchText.toLowerCase();
-      return (
-        !searchText.trim() ||
+      const matchesSearch = !searchText.trim() ||
         (tx.party && tx.party.toLowerCase().includes(searchLower)) ||
         (tx.categoryDetails?.name && tx.categoryDetails.name.toLowerCase().includes(searchLower)) ||
+        (tx.categoryName && tx.categoryName.toLowerCase().includes(searchLower)) ||
         (tx.category && tx.category.toLowerCase().includes(searchLower)) ||
         (tx.remark && tx.remark.toLowerCase().includes(searchLower)) ||
         (tx.description && tx.description.toLowerCase().includes(searchLower)) ||
         (tx.paymentModeDetails?.name && tx.paymentModeDetails.name.toLowerCase().includes(searchLower)) ||
+        (tx.paymentModeName && tx.paymentModeName.toLowerCase().includes(searchLower)) ||
         (tx.paymentMode && tx.paymentMode.toLowerCase().includes(searchLower)) ||
-        tx.amount.toString().includes(searchLower)
-      );
+        tx.amount.toString().includes(searchLower);
+
+      const matchesParty = selectedParty === "all" || tx.party === selectedParty;
+
+      return matchesSearch && matchesParty;
     });
-  }, [transactions, searchText]);
+  }, [transactions, searchText, selectedParty]);
 
   // Category and Payment options
   const { categories = [] } = useGetCategoriesByBook({ bookId: activeBookId });
@@ -548,7 +562,7 @@ export default function BookPage() {
                   <Settings className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline text-xs font-semibold">Settings</span>
                 </Link>
-              </Button>
+              </Button> 
               {canCreateBook && (
                 <Button
                   size="sm"
@@ -567,30 +581,129 @@ export default function BookPage() {
               )}
             </div>
           </div>
+          {/* Book Tabs/Dropdown Navigation */}
+          {cashbookList && cashbookList.length > 0 && (
+            <div className="flex items-center justify-between px-4 sm:px-6 border-b border-gray-100 bg-white shrink-0 h-10 gap-2">
+              {/* Left Side: Horizontal Scrollable Tabs */}
+              <div className="flex items-center gap-4 overflow-x-auto scrollbar-none flex-grow">
+                {cashbookList
+                  .filter((book) => book.name.toLowerCase().includes(bookSearchText.toLowerCase()))
+                  .map((book) => {
+                    const isActive = book._id === activeBookId;
+                    return (
+                      <button
+                        key={book._id}
+                        onClick={() => handleBookChange(book)}
+                        className={`relative pb-2 text-xs md:text-sm font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${isActive
+                          ? "text-blue-600 font-bold"
+                          : "text-gray-500 hover:text-gray-800"
+                          }`}
+                      >
+                        <span className="truncate max-w-[120px]" title={book.name}>
+                          {book.name.length > 15 ? book.name.substring(0, 12) + "..." : book.name}
+                        </span>
+                        {isActive && (
+                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
+                        )}
+                      </button>
+                    );
+                  })}
+                {cashbookList.filter((book) => book.name.toLowerCase().includes(bookSearchText.toLowerCase())).length === 0 && (
+                  <span className="text-xs text-gray-400 font-medium py-1">No books match "{bookSearchText}"</span>
+                )}
+              </div>
 
-          {/* Book Tabs Navigation */}
-          <div className="flex items-center justify-between px-4 sm:px-6 border-b border-gray-100 bg-white shrink-0 h-10">
-            <div className="flex items-center gap-4 overflow-x-auto scrollbar-none">
-              {cashbookList.map((book) => {
-                const isActive = book._id === activeBookId;
-                return (
-                  <button
-                    key={book._id}
-                    onClick={() => handleBookChange(book)}
-                    className={`relative pb-2 text-xs md:text-sm font-semibold whitespace-nowrap transition-all duration-200 ${isActive
-                      ? "text-blue-600 font-bold"
-                      : "text-gray-500 hover:text-gray-800"
-                      }`}
-                  >
-                    <span>{book.name}</span>
-                    {isActive && (
-                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
+              {/* Right Side: Search and Dropdown trigger (Visible only if books > 3) */}
+              {cashbookList.length > 5 && (
+                <div className="flex items-center gap-2 border-l border-gray-100 pl-3 shrink-0 h-full py-1.5">
+                  {/* Inline Book Search */}
+                  <div className="relative flex items-center">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="Search books..."
+                      value={bookSearchText}
+                      onChange={(e) => setBookSearchText(e.target.value)}
+                      className="h-7 w-38 pl-7 pr-6 bg-gray-50 border-gray-200 text-[10px] rounded-lg focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:border-blue-500"
+                    />
+                    {bookSearchText && (
+                      <button
+                        onClick={() => setBookSearchText("")}
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-gray-100 text-gray-400 cursor-pointer"
+                      >
+                        <X className="w-2.5 h-2.5" />
+                      </button>
                     )}
-                  </button>
-                );
-              })}
+                  </div>
+
+                  {/* Dropdown Arrow Trigger */}
+                  <Popover onOpenChange={(open) => { if (!open) setBookSearchText(""); }}>
+                    <PopoverTrigger asChild>
+                      <button className="flex items-center justify-center h-7 w-7 bg-gray-50 border border-gray-200 hover:bg-gray-100 text-gray-500 hover:text-gray-800 rounded-lg transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500" title="All Books">
+                        <ChevronDown className="w-3.5 h-3.5 shrink-0" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 p-0 z-[9999] overflow-hidden rounded-xl border border-gray-100 shadow-lg bg-white" align="end">
+                      {/* Search Section inside the Popover */}
+                      <div className="p-2 border-b border-gray-100 bg-gray-50/50">
+                        <div className="relative flex items-center">
+                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                          <Input
+                            type="text"
+                            placeholder="Type to filter..."
+                            value={bookSearchText}
+                            onChange={(e) => setBookSearchText(e.target.value)}
+                            className="h-8 pl-8 pr-7 bg-white border-gray-200 text-xs rounded-lg focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:border-blue-500"
+                          />
+                          {bookSearchText && (
+                            <button
+                              onClick={() => setBookSearchText("")}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 cursor-pointer"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Books List Section */}
+                      <div className="max-h-60 overflow-y-auto p-1 space-y-0.5">
+                        {cashbookList
+                          .filter((b) => b.name.toLowerCase().includes(bookSearchText.toLowerCase()))
+                          .map((book) => {
+                            const isActive = book._id === activeBookId;
+                            return (
+                              <button
+                                key={book._id}
+                                onClick={() => {
+                                  handleBookChange(book);
+                                }}
+                                className={cn(
+                                  "flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-lg text-left transition-colors cursor-pointer",
+                                  isActive
+                                    ? "bg-blue-50 text-blue-700 font-bold"
+                                    : "text-gray-700 hover:bg-gray-50"
+                                )}
+                              >
+                                <span className="truncate max-w-[180px]" title={book.name}>
+                                  {book.name.length > 22 ? book.name.substring(0, 18) + "..." : book.name}
+                                </span>
+                                {isActive && <Check className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
+                              </button>
+                            );
+                          })}
+                        {cashbookList.filter((b) => b.name.toLowerCase().includes(bookSearchText.toLowerCase())).length === 0 && (
+                          <div className="text-center py-4 text-xs text-gray-400 font-medium">
+                            No books found
+                          </div>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
           {/* Search bar */}
           <div className="px-4 sm:px-6 mt-2 bg-white shrink-0">
@@ -746,13 +859,56 @@ export default function BookPage() {
               </PopoverContent>
             </Popover>
 
+            {/* Party Popover */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 rounded-full border-gray-200 text-xs font-semibold bg-white text-gray-700 flex items-center gap-1.5 hover:bg-gray-50 hover:border-gray-300 shrink-0">
+                  <span>
+                    {selectedParty === "all" ? "Party" : `Party: ${selectedParty}`}
+                  </span>
+                  <ChevronDown className="w-3 h-3 text-gray-400" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-1.5 max-h-60 overflow-y-auto z-[9999]" align="start">
+                <div className="grid gap-0.5">
+                  <button
+                    onClick={() => setSelectedParty("all")}
+                    className={`flex items-center justify-between w-full px-3 py-2 text-xs font-semibold rounded-lg text-left transition-colors ${selectedParty === "all" ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                  >
+                    <span>All Parties</span>
+                    {selectedParty === "all" && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                  </button>
+                  {Array.from(
+                    new Set([
+                      ...parties.map((p) => p.name),
+                      ...transactions.map((tx) => tx.party).filter(Boolean),
+                    ])
+                  )
+                    .sort((a, b) => a.localeCompare(b))
+                    .map((partyName) => (
+                      <button
+                        key={partyName}
+                        onClick={() => setSelectedParty(partyName)}
+                        className={`flex items-center justify-between w-full px-3 py-2 text-xs font-semibold rounded-lg text-left transition-colors ${selectedParty === partyName ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-50"
+                          }`}
+                      >
+                        <span className="truncate max-w-[170px]">{partyName}</span>
+                        {selectedParty === partyName && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                      </button>
+                    ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+
             {/* Clear Filters Option */}
-            {(dateFilterType !== "all" || selectedCategory !== "all" || selectedPaymentMode !== "all") && (
+            {(dateFilterType !== "all" || selectedCategory !== "all" || selectedPaymentMode !== "all" || selectedParty !== "all") && (
               <button
                 onClick={() => {
                   setDateFilterType("all");
                   setSelectedCategory("all");
                   setSelectedPaymentMode("all");
+                  setSelectedParty("all");
                 }}
                 className="text-xs font-bold text-red-500 hover:text-red-700 ml-1.5 transition-colors shrink-0"
               >
@@ -813,6 +969,7 @@ export default function BookPage() {
                   bookId={activeBookId}
                   businessId={businessId}
                   token={token}
+                  disabled={!activeBookId}
                 />
               </div>
             </div>
@@ -820,26 +977,35 @@ export default function BookPage() {
 
           {/* Ledger Table Headers */}
           <div className="grid grid-cols-10 pl-4 pr-4 sm:pl-6 sm:pr-[30px] py-2 bg-gray-50 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wide shrink-0 ml-0 sm:ml-6">
-            <div className="col-span-4 sm:col-span-4 ml-0 sm:ml-6">Entity</div>
-            <div className="col-span-2 sm:col-span-2 text-right">Cash In / Out</div>
-            <div className="col-span-2 sm:col-span-2 text-right">Balance</div>
+            <div className="col-span-5 sm:col-span-4 ml-0 sm:ml-6">Entity</div>
+            <div className="col-span-3 sm:col-span-2 text-right">Cash In / Out</div>
+            <div className="hidden sm:block sm:col-span-2 text-right">Balance</div>
             <div className="col-span-2 sm:col-span-2 text-right">Verify</div>
           </div>
 
           {/* Transaction List Entries */}
-          <div className="flex-1 max-h-[360px] overflow-y-auto px-4 py-3 space-y-2 bg-gray-50/20 scrollbar-none ml-0 sm:ml-5">
+          <div className="flex-1 responsive-ledger-height overflow-y-auto px-4 py-3 space-y-2 bg-gray-50/20 scrollbar-none ml-0 sm:ml-5">
             {isTransactionsPending ? (
               // Loading Skeleton
-              [...Array(10)].map((_, i) => (
-                <div key={i} className="grid grid-cols-10 items-center p-3 bg-white border border-gray-100 rounded-xl animate-pulse">
-                  <div className="col-span-4 sm:col-span-4 space-y-2">
+              [...Array(8)].map((_, i) => (
+                <div
+                  key={i}
+                  className={`grid grid-cols-10 items-center p-3 bg-white border border-gray-100 rounded-xl animate-pulse ${
+                    i >= 4 && i < 6
+                      ? "hidden md:[@media(min-height:820px)]:grid"
+                      : i >= 6
+                      ? "hidden md:[@media(min-height:960px)]:grid"
+                      : ""
+                  }`}
+                >
+                  <div className="col-span-5 sm:col-span-4 space-y-2">
                     <Skeleton className="h-4 w-24" />
                     <Skeleton className="h-3 w-32" />
                   </div>
-                  <div className="col-span-2 sm:col-span-2 flex justify-end pr-3 sm:pr-5">
+                  <div className="col-span-3 sm:col-span-2 flex justify-end pr-3 sm:pr-5">
                     <Skeleton className="h-4 w-16" />
                   </div>
-                  <div className="col-span-2 sm:col-span-2 flex justify-end pr-3 sm:pr-5">
+                  <div className="hidden sm:block sm:col-span-2 justify-end pr-3 sm:pr-5">
                     <Skeleton className="h-4 w-12" />
                   </div>
                   <div className="col-span-2 sm:col-span-2 flex justify-center">
@@ -848,21 +1014,10 @@ export default function BookPage() {
                 </div>
               ))
             ) : filteredTransactions.length === 0 ? (
-              <>
-                {[...Array(3)].map((_, i) => (
-                  <div
-                    key={`empty-${i}`}
-                    className="grid grid-cols-10 items-stretch border border-dashed border-gray-100 rounded-xl h-[82px] bg-white/20"
-                  >
-                    {i === 0 ? (
-                      <div className="flex flex-col items-center justify-center text-center col-span-10 h-full">
-                        <span className="font-bold text-xs text-gray-400">No transactions recorded</span>
-                        <span className="text-[10px] text-gray-300 font-normal mt-0.5">Entries will appear here</span>
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </>
+              <div className="flex flex-col items-center justify-center text-center h-full min-h-[220px] py-12 bg-white/5 rounded-xl border border-dashed border-gray-100/50">
+                <span className="font-bold text-sm text-gray-400">No transactions recorded</span>
+                <span className="text-xs text-gray-300 font-normal mt-1">Entries will appear here</span>
+              </div>
             ) : (
               <>
                 {filteredTransactions.map((tx) => {
@@ -881,7 +1036,7 @@ export default function BookPage() {
                         }`}
                     >
                       {/* Column 1: Entity */}
-                      <div className="col-span-4 sm:col-span-4 p-2 pl-3 sm:pl-4 flex flex-col justify-center gap-1 bg-white">
+                      <div className="col-span-5 sm:col-span-4 p-2 pl-3 sm:pl-4 flex flex-col justify-center gap-1 bg-white">
                         <span className="text-[11px] font-semibold text-slate-500">
                           {formattedDate} {formattedTime && `• ${formattedTime}`}
                         </span>
@@ -891,19 +1046,19 @@ export default function BookPage() {
                           </span>
                         )}
                         <span className="text-xs font-semibold text-slate-500 truncate max-w-full">
-                          {tx.paymentModeDetails?.name || tx.paymentMode || "Cash"} • {tx.party || tx.remark || tx.description || "Self"}
+                          {tx.paymentModeDetails?.name || tx.paymentModeName || tx.paymentMode || "Cash"} • {tx.party || tx.remark || tx.description || "Self"}
                         </span>
                       </div>
 
                       {/* Column 2: Cash In / Out */}
-                      <div className="col-span-2 sm:col-span-2 flex items-center justify-end border-l border-gray-100 bg-gray-50/10 p-2 pr-3 sm:pr-5 bg-gray-400/20">
+                      <div className="col-span-3 sm:col-span-2 flex items-center justify-end border-l border-gray-100 bg-gray-50/10 p-2 pr-3 sm:pr-5 bg-gray-400/20">
                         <span className={`text-xs sm:text-[14px] font-bold tracking-tight ${isCashIn ? "text-[#00a854]" : "text-[#e60000]"}`}>
                           {isCashIn ? "+ " : "- "}{formatAmount(tx.amount)}
                         </span>
                       </div>
 
                       {/* Column 3: Balance */}
-                      <div className="col-span-2 sm:col-span-2 flex items-center justify-end border-l border-gray-100 bg-gray-50/10 p-2 pr-3 sm:pr-5">
+                      <div className="hidden sm:flex sm:col-span-2 items-center justify-end border-l border-gray-100 bg-gray-50/10 p-2 pr-3 sm:pr-5">
                         <span className="text-xs sm:text-[14px] font-bold text-slate-600">
                           {tx.runningBalance !== undefined ? formatAmount(tx.runningBalance) : "-"}
                         </span>
@@ -923,7 +1078,11 @@ export default function BookPage() {
                             disabled={isVerifyingTransaction}
                             onClick={(e) => {
                               e.stopPropagation();
-                              verifyTransaction(tx._id);
+                              verifyTransaction(tx._id, {
+                                onSuccess: () => {
+                                  refetchTransactions();
+                                }
+                              });
                             }}
                             className="h-6 px-2 text-[10px] font-bold text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100 cursor-pointer"
                           >
@@ -971,7 +1130,12 @@ export default function BookPage() {
           <div suppressHydrationWarning className="mt-auto grid grid-cols-3 gap-1.5 sm:gap-2 px-4 sm:px-6 border-t border-gray-100 bg-white shrink-0 h-[52px] items-center">
             <button
               onClick={() => handleOpenAddTransaction("cash_in")}
-              className="flex items-center justify-center gap-1 sm:gap-1.5 h-9 bg-[#43AF51] active:scale-95 text-white font-bold text-[10px] sm:text-[11px] rounded-lg transition-all shadow-sm cursor-pointer px-1 sm:px-2.5"
+              disabled={!activeBookId}
+              className={`flex items-center justify-center gap-1 sm:gap-1.5 h-9 bg-[#43AF51] text-white font-bold text-[10px] sm:text-[11px] rounded-lg transition-all shadow-sm px-1 sm:px-2.5 ${
+                !activeBookId
+                  ? "opacity-50 cursor-not-allowed pointer-events-none"
+                  : "active:scale-95 cursor-pointer"
+              }`}
             >
               <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white flex items-center justify-center text-[#43AF51] shrink-0">
                 <ArrowDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
@@ -980,7 +1144,12 @@ export default function BookPage() {
             </button>
             <button
               onClick={() => handleOpenAddTransaction("cash_out")}
-              className="flex items-center justify-center gap-1 sm:gap-1.5 h-9 bg-[#C54E4E] active:scale-95 text-white font-bold text-[10px] sm:text-[11px] rounded-lg transition-all shadow-sm cursor-pointer px-1 sm:px-2.5"
+              disabled={!activeBookId}
+              className={`flex items-center justify-center gap-1 sm:gap-1.5 h-9 bg-[#C54E4E] text-white font-bold text-[10px] sm:text-[11px] rounded-lg transition-all shadow-sm px-1 sm:px-2.5 ${
+                !activeBookId
+                  ? "opacity-50 cursor-not-allowed pointer-events-none"
+                  : "active:scale-95 cursor-pointer"
+              }`}
             >
               <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white flex items-center justify-center text-[#C54E4E] shrink-0">
                 <ArrowUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
@@ -995,7 +1164,12 @@ export default function BookPage() {
                   setIsMobileOpen(true);
                 }
               }}
-              className="flex items-center justify-center gap-1 sm:gap-1.5 h-9 bg-[#1b66ff] active:scale-95 text-white font-bold text-[10px] sm:text-[11px] rounded-lg transition-all shadow-sm cursor-pointer px-1 sm:px-2.5"
+              disabled={!activeBookId}
+              className={`flex items-center justify-center gap-1 sm:gap-1.5 h-9 bg-[#1b66ff] text-white font-bold text-[10px] sm:text-[11px] rounded-lg transition-all shadow-sm px-1 sm:px-2.5 ${
+                !activeBookId
+                  ? "opacity-50 cursor-not-allowed pointer-events-none"
+                  : "active:scale-95 cursor-pointer"
+              }`}
             >
               <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white flex items-center justify-center text-[#1b66ff] shrink-0">
                 <ArrowLeftRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
@@ -1273,14 +1447,14 @@ function TransactionDetailsPane({
         <div className="flex items-center justify-between border-b border-gray-200/50 pb-2.5">
           <span className="text-[11px] font-medium text-gray-700">Payment Mode</span>
           <span className="text-[11px] font-medium text-[#3f66e5]">
-            {transactionData.paymentModeDetails?.name || transactionData.paymentMode || "Cash"}
+            {transactionData.paymentModeDetails?.name || transactionData.paymentModeName || transactionData.paymentMode || "Cash"}
           </span>
         </div>
 
         <div className="flex items-center justify-between border-b border-gray-200/50 pb-2.5">
           <span className="text-[11px] font-medium text-gray-700">Category</span>
           <span className="text-[11px] font-medium text-[#3f66e5]">
-            {transactionData.categoryDetails?.name || transactionData.category || "General"}
+            {transactionData.categoryDetails?.name || transactionData.categoryName || transactionData.category || "General"}
           </span>
         </div>
 

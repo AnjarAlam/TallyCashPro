@@ -146,14 +146,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       queryClient.resetQueries({ queryKey: ["auth-user"] });
 
       toast.success("Logged out successfully");
-      window.location.replace("/login");
+      window.location.replace("/");
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Error during logout");
       // Ensure state is cleared even if error occurs
       setIsLoggedin(false);
       setUser(null);
-      window.location.replace("/login");
+      window.location.replace("/");
     } finally {
       setLoading(false);
     }

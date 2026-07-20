@@ -1,233 +1,279 @@
 "use client";
 
-import { BusinessCategoryCard } from "@/components/cards"; // Assuming this component exists
-import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { BusinessCategory, type CompanyInfo } from "@/interface"; // Assuming these interfaces exist
-import { useUpdateBusiness } from "@/services"; // Assuming this hook exists
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { HomeIcon, FileTextIcon, BookOpenIcon } from "lucide-react"; // Import Lucide icons
+import { Button } from "@/components/ui/button";
+import { useUpdateBusiness } from "@/services";
+import { BusinessCategory, type CompanyInfo } from "@/interface";
+import {
+    Utensils,
+    CookingPot,
+    Wrench,
+    Telescope,
+    Laptop,
+    Briefcase,
+    HeartPulse,
+    Factory,
+    GraduationCap,
+    MoreHorizontal,
+} from "lucide-react";
 
 const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Business name must be at least 2 characters.",
-  }),
-  description: z.string().min(2, {
-    message: "Description must be at least 2 characters.",
-  }),
-  category: z.string().min(1, {
-    message: "Please select a business category.",
-  }),
+    name: z.string().min(2, {
+        message: "Business name must be at least 2 characters.",
+    }),
+    description: z.string().min(2, {
+        message: "Description must be at least 2 characters.",
+    }),
+    category: z.string().min(1, {
+        message: "Please select a business category.",
+    }),
 });
 
 interface BusinessFormProps {
-  onClose: () => void;
-  business: CompanyInfo; // Optional, for editing existing business
+    onClose: () => void;
+    business: CompanyInfo;
 }
 
-export default function EditBusinessForm({
-  onClose,
-  business,
-}: BusinessFormProps) {
-  const {
-    updateBusiness,
-    isUpdatingBusiness,
-    isUpdateBusinessError,
-    updateBusinessError,
-  } = useUpdateBusiness();
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: business?.name || "",
-      description: business?.description || "",
-      category: business?.category || BusinessCategory.RETAIL_STORE,
+const CATEGORIES = [
+    {
+        id: BusinessCategory.RETAIL_STORE,
+        label: "Retail Store",
+        icon: Utensils,
+        color: "bg-[#EF4444]", // Red
     },
-  });
+    {
+        id: BusinessCategory.RESTAURANT,
+        label: "Restaurant",
+        icon: CookingPot,
+        color: "bg-[#EC4899]", // Pink
+    },
+    {
+        id: BusinessCategory.SERVICE_BUSINESS,
+        label: "Service Business",
+        icon: Wrench,
+        color: "bg-[#8B5CF6]", // Purple
+    },
+    {
+        id: BusinessCategory.FREELANCING,
+        label: "Freelancing",
+        icon: Telescope,
+        color: "bg-[#06B6D4]", // Cyan
+    },
+    {
+        id: BusinessCategory.ONLINE_BUSINESS,
+        label: "Online Business",
+        icon: Laptop,
+        color: "bg-[#10B981]", // Emerald Green
+    },
+    {
+        id: BusinessCategory.CONSULTING,
+        label: "Consulting",
+        icon: Briefcase,
+        color: "bg-[#84CC16]", // Lime Green
+    },
+    {
+        id: BusinessCategory.HEALTHCARE,
+        label: "Healthcare",
+        icon: HeartPulse,
+        color: "bg-[#047857]", // Dark Green
+    },
+    {
+        id: BusinessCategory.MANUFACTURING,
+        label: "Manufacturing",
+        icon: Factory,
+        color: "bg-[#D946EF]", // Fuchsia
+    },
+    {
+        id: BusinessCategory.EDUCATION,
+        label: "Education",
+        icon: GraduationCap,
+        color: "bg-[#6366F1]", // Indigo
+    },
+    {
+        id: BusinessCategory.OTHER,
+        label: "Other",
+        icon: MoreHorizontal,
+        color: "bg-[#64748B]", // Slate
+    },
+];
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("Submitting form with values:", values);
-    if (business && !business._id) {
-      console.error("Business ID is missing");
-      form.setError("root.serverError", {
-        message: "Business ID is missing. Cannot update.",
-      });
-      return;
-    }
-    try {
-      await updateBusiness(
-        { businessId: business?._id || "", payload: values },
-        {
-          onSuccess: (data) => {
-            console.log("Business updated:", data);
-            onClose();
-          },
-          onError: (err) => {
-            console.error("Error updating business:", err);
-            form.setError("root.serverError", {
-              message: `Failed to update business: ${
-                err.message || "Unknown error"
-              }`,
+export default function EditBusinessForm({ onClose, business }: BusinessFormProps) {
+    const {
+        updateBusiness,
+        isUpdatingBusiness,
+    } = useUpdateBusiness();
+
+    const getCategoryValue = (val?: string) => {
+        if (!val) return BusinessCategory.RETAIL_STORE;
+        const matched = Object.values(BusinessCategory).find(
+            (cat) => cat.toLowerCase() === val.toLowerCase()
+        );
+        return matched || BusinessCategory.RETAIL_STORE;
+    };
+
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            name: business?.name || "",
+            description: business?.description || "",
+            category: getCategoryValue(business?.category),
+        },
+    });
+
+    useEffect(() => {
+        if (business) {
+            form.reset({
+                name: business.name || "",
+                description: business.description || "",
+                category: getCategoryValue(business.category),
             });
-          },
         }
-      );
-    } catch (error) {
-      console.error("Unexpected error:", error);
-      form.setError("root.serverError", {
-        message: `An unexpected error occurred: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      });
+    }, [business, form]);
+
+    async function onSubmit(values: z.infer<typeof formSchema>) {
+        if (!business?._id) return;
+        updateBusiness(
+            { businessId: business._id, payload: values },
+            {
+                onSuccess: (data) => {
+                    console.log("Business updated:", data);
+                    onClose();
+                },
+                onError: (err) => {
+                    console.error("Error updating business:", err);
+                },
+            }
+        );
     }
-  }
 
-  return (
-    <Card className="w-full mx-auto border-none shadow-none rounded-none flex flex-col h-full">
-      <CardHeader>
-        <CardTitle className="text-2xl">Edit Business</CardTitle>
-        <CardDescription>Update your business details</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-1">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Business Name Field */}
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-md bg-gray-100">
-                        <HomeIcon className="w-4 h-4" />
-                      </div>
-                      <FormLabel className="text-sm font-medium text-gray-700 flex-1">
-                        Business Title *
-                      </FormLabel>
-                    </div>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., My Awesome Startup"
-                        className="border-gray-300 focus-visible:ring-1 focus-visible:ring-gray-400"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage className="text-xs text-red-600" />
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            {/* Description Field */}
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-md bg-gray-100">
-                        <FileTextIcon className="w-4 h-4" />
-                      </div>
-                      <FormLabel className="text-sm font-medium text-gray-700 flex-1">
-                        Business Description *
-                      </FormLabel>
-                    </div>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Describe your business in a few sentences..."
-                        className="border-gray-300 focus-visible:ring-1 focus-visible:ring-gray-400 min-h-[100px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage className="text-xs text-red-600" />
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            {/* Category Field */}
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="space-y-2 border border-gray-300 bg-white p-3 rounded-md">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-md bg-gray-100">
-                        <BookOpenIcon className="w-4 h-4" />
-                      </div>
-                      <FormLabel className="text-sm font-medium text-gray-700 flex-1">
-                        Business Category *
-                      </FormLabel>
-                    </div>
-                    <FormControl>
-                      <div className="grid grid-cols-2 gap-2 pt-1">
-                        {Object.values(BusinessCategory).map((category) => (
-                          <BusinessCategoryCard
-                            key={category}
-                            category={category}
-                            isSelected={field.value === category}
-                            onToggle={() => {
-                              form.setValue("category", category); // Update form value directly
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </FormControl>
-                    <FormMessage className="text-xs text-red-600" />
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            {/* Display general form errors */}
-            {form.formState.errors.root?.serverError && (
-              <p className="text-xs text-red-600 text-center">
-                {form.formState.errors.root.serverError.message}
-              </p>
-            )}
-
-            <div className="flex justify-end space-x-2 w-full">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={isUpdatingBusiness}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 w-1/2 bg-transparent"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={isUpdatingBusiness}
-                className="bg-gray-900 hover:bg-gray-800 w-1/2"
-              >
-                {isUpdatingBusiness ? "Saving..." : "Update Details"}
-              </Button>
+    return (
+        <div className="w-full bg-white font-sans">
+            {/* Dialog Header Title matching create-business layout */}
+            <div className="pb-2 mb-4 border-b">
+                <h2 className="text-base font-bold text-slate-800">Edit Business Details</h2>
             </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
-  );
+
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+
+                    {/* Business Name and Description Field inline, with a single divider below */}
+                    <div className="space-y-3.5 pb-4 border-b border-slate-300">
+                        {/* Name Field */}
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem className="space-y-0">
+                                    <div className="grid grid-cols-1 sm:grid-cols-5 items-center gap-2 sm:gap-4">
+                                        <FormLabel className="text-xs font-semibold text-slate-500 sm:text-left">
+                                            Business Title
+                                        </FormLabel>
+                                        <div className="hidden sm:block sm:col-span-1"> </div>
+                                        <div className="sm:col-span-3">
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Enter Here"
+                                                    className="border-slate-200 focus-visible:ring-1 focus-visible:ring-blue-500 rounded-lg h-9 text-xs placeholder:text-slate-300 placeholder:font-normal font-medium"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage className="text-[10px] text-red-600 mt-1" />
+                                        </div>
+                                    </div>
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Description Field */}
+                        <FormField
+                            control={form.control}
+                            name="description"
+                            render={({ field }) => (
+                                <FormItem className="space-y-0">
+                                    <div className="grid grid-cols-1 sm:grid-cols-5 items-start gap-2 sm:gap-4">
+                                        <FormLabel className="text-xs font-semibold text-slate-500 sm:text-left pt-2.5 sm:col-span-2">
+                                            Business Description
+                                        </FormLabel>
+                                        <div className="sm:col-span-3">
+                                            <FormControl>
+                                                <Textarea
+                                                    placeholder="Enter Here"
+                                                    className="border-slate-200 focus-visible:ring-1 focus-visible:ring-blue-500 rounded-lg min-h-[70px] text-xs placeholder:text-slate-300 placeholder:font-normal font-medium resize-none"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage className="text-[10px] text-red-600 mt-1" />
+                                        </div>
+                                    </div>
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+
+                    {/* Category Field */}
+                    <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                            <FormItem className="space-y-2">
+                                <FormLabel className="text-xs font-semibold text-slate-500 block">
+                                    Business Category
+                                </FormLabel>
+                                <FormControl>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                                        {CATEGORIES.map((cat) => {
+                                            const Icon = cat.icon;
+                                            const isSelected = field.value === cat.id;
+                                            return (
+                                                <div
+                                                    key={cat.id}
+                                                    onClick={() => form.setValue("category", cat.id)}
+                                                    className={`flex items-center gap-1 p-1 pr-2 rounded-full border transition-all cursor-pointer ${isSelected
+                                                        ? "border-[#3b82f6] bg-blue-50/10 ring-[0.5px] ring-[#3b82f6]"
+                                                        : "border-slate-200 hover:bg-slate-50/50 bg-white"
+                                                        }`}
+                                                >
+                                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white shrink-0 ${cat.color}`}>
+                                                        <Icon className="w-3.5 h-3.5" />
+                                                    </div>
+                                                    <span className="text-[11px] font-semibold text-slate-700 truncate">
+                                                        {cat.label}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </FormControl>
+                                <FormMessage className="text-[10px] text-red-600 mt-1" />
+                            </FormItem>
+                        )}
+                    />
+
+                    {/* Submit Button */}
+                    <div className="pt-2">
+                        <Button
+                            type="submit"
+                            disabled={isUpdatingBusiness}
+                            className="w-full bg-[#3b82f6] hover:bg-blue-600 text-white font-bold h-11 rounded-lg text-xs transition-all shadow-sm cursor-pointer"
+                        >
+                            {isUpdatingBusiness ? "Saving..." : "Save Changes"}
+                        </Button>
+                    </div>
+                </form>
+            </Form>
+        </div>
+    );
 }

@@ -215,12 +215,12 @@ const TransactionDetail = ({
               </h1>
             </div>
             <div className="bg-white p-2 rounded-full shadow-sm">
-              {getIcon(transaction.category, categoryIcons)}
+              {getIcon(transaction.categoryDetails?.name || transaction.categoryName || transaction.category, categoryIcons)}
             </div>
           </div>
 
           <h2 className="text-xl font-semibold mt-2">
-            {transaction.category}
+            {transaction.categoryDetails?.name || transaction.categoryName || transaction.category}
           </h2>
           {transaction.description && (
             <p className="text-gray-600 mt-2">{transaction.description}</p>
@@ -234,8 +234,8 @@ const TransactionDetail = ({
               label="Payment Method"
               value={
                 <div className="flex items-center gap-2">
-                  {getIcon(transaction.paymentMode, paymentIcons)}
-                  <span>{transaction.paymentMode}</span>
+                  {getIcon(transaction.paymentModeDetails?.name || transaction.paymentModeName || transaction.paymentMode, paymentIcons)}
+                  <span>{transaction.paymentModeDetails?.name || transaction.paymentModeName || transaction.paymentMode}</span>
                 </div>
               }
             />

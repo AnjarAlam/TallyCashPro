@@ -303,7 +303,7 @@ export function DashboardSidebar() {
                     const filtered = (businesses || []).filter((b: any) =>
                       b.company.name.toLowerCase().includes(businessSearchQuery.toLowerCase())
                     );
-                    const displayLimit = 5;
+                    const displayLimit = 3;
                     const displayed = filtered.slice(0, displayLimit);
 
                     if (displayed.length === 0) {
@@ -324,7 +324,7 @@ export function DashboardSidebar() {
                           );
                         })}
 
-                        {businesses.length > 5 && (
+                        {businesses.length > 4 && (
                           <div className="px-1 py-1 border-t border-slate-100 mt-1">
                             <DropdownMenuItem
                               onClick={() => router.push('/dashboard/business')}

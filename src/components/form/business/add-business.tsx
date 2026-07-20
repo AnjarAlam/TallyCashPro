@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { useCreateBusiness } from "@/services";
 import { BusinessCategory } from "@/interface";
 import { BusinessCategoryCard } from "@/components/cards";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -43,6 +44,7 @@ interface BusinessFormProps {
 }
 
 export default function AddBusinessForm({ onClose }: BusinessFormProps) {
+  const router = useRouter();
   const {
     createBusiness,
     isCreatingBusiness,
@@ -61,9 +63,12 @@ export default function AddBusinessForm({ onClose }: BusinessFormProps) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     createBusiness(values, {
-      onSuccess: (data) => {
-        console.log("Business created:", data);
+      onSuccess: (res) => {
+        console.log("Business created:", res);
         onClose();
+        if (res?.data?._id) {
+          router.push(`/dashboard/business/${res.data._id}/book`);
+        }
       },
       onError: (err) => {
         console.error("Error creating business:", err);

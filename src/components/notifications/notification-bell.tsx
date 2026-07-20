@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Bell, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useSidebar } from "@/components/ui/sidebar";
 import {
   Popover,
   PopoverContent,
@@ -23,6 +25,8 @@ const DROPDOWN_LIMIT = 8;
 
 export function NotificationBell() {
   const { isLoggedin } = useAuth();
+  const { isMobile, setOpenMobile } = useSidebar();
+  const [isOpen, setIsOpen] = useState(false);
   const { unreadCount } = useGetUnreadNotificationCount(isLoggedin);
   const {
     notifications,
@@ -45,7 +49,9 @@ export function NotificationBell() {
 
   return (
     <Popover
+      open={isOpen}
       onOpenChange={(open) => {
+        setIsOpen(open);
         if (open) refetchNotifications();
       }}
     >
@@ -103,7 +109,17 @@ export function NotificationBell() {
         </div>
         <div className="border-t px-4 py-2.5">
           <Button variant="link" className="h-auto p-0 text-sm w-full" asChild>
-            <Link href="/dashboard/notifications">View all notifications</Link>
+            <Link
+              href="/dashboard/notifications"
+              onClick={() => {
+                setIsOpen(false);
+                if (isMobile) {
+                  setOpenMobile(false);
+                }
+              }}
+            >
+              View all notifications
+            </Link>
           </Button>
         </div>
       </PopoverContent>

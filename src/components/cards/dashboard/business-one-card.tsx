@@ -229,8 +229,7 @@ import type React from "react";
 import { DeleteConfirmationForm, EditBusinessForm } from "@/components/form";
 import ModalLayout from "@/components/modals/modal-layout";
 import { Card, CardFooter } from "@/components/ui/card";
-import { DialogTitle } from "@/components/ui/dialog";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -570,23 +569,17 @@ export default function BusinessCard({
         </div>
       </div>
 
-      {/* Edit Form Sheet */}
+      {/* Edit Form Dialog */}
       {canEdit && (
-        <Sheet open={openEditSheet} onOpenChange={handleEditClose}>
-          <SheetContent
-            side="right"
-            className="overflow-y-scroll pb-4 w-full sm:min-w-1/2 lg:min-w-1/3 duration-75 transition-all"
-            onInteractOutside={(e) => {
-              e.preventDefault();
-            }}
-          >
-            <DialogTitle />
+        <Dialog open={openEditSheet} onOpenChange={handleEditClose}>
+          <DialogContent className="w-[92%] sm:min-w-[536px] max-h-[90vh] overflow-y-auto p-5 bg-white rounded-2xl border border-slate-200/50 shadow-2xl scrollbar-none">
+            <DialogTitle className="sr-only">Edit Business</DialogTitle>
             <EditBusinessForm
               onClose={handleEditClose}
               business={business}
             />
-          </SheetContent>
-        </Sheet>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Team Management Sidebar */}

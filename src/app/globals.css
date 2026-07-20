@@ -151,3 +151,34 @@
   scrollbar-width: thin !important;
   scrollbar-color: #cbd5e1 transparent !important;
 }
+
+/* Responsive max-height for transaction list */
+.responsive-ledger-height {
+  max-height: 260px; /* Small screen height default */
+}
+
+/* On mobile viewports (width < 768px), override and force a small height to fit 4 items */
+@media (max-width: 767px) {
+  .responsive-ledger-height {
+    max-height: 360px !important; /* Fits 4 items perfectly on mobile */
+  }
+}
+
+/* Desktop height scaling (only when width >= 768px) */
+@media (min-width: 768px) and (min-height: 700px) {
+  .responsive-ledger-height {
+    max-height: 360px; /* Standard laptop screen (shows 4 items) */
+  }
+}
+
+@media (min-width: 768px) and (min-height: 820px) {
+  .responsive-ledger-height {
+    max-height: 480px; /* Slightly taller screen (shows 5-6 items) */
+  }
+}
+
+@media (min-width: 768px) and (min-height: 960px) {
+  .responsive-ledger-height {
+    max-height: 600px; /* Large screen / 1280px screen height (shows 7-8 items) */
+  }
+}

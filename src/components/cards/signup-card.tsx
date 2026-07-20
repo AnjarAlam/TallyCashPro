@@ -27,6 +27,7 @@ import { useEffect } from "react";
 import { setSession } from "@/hooks/jwt/utils";
 import { recordSessionActivity } from "@/lib/session-inactivity";
 import { safeSessionStorage } from "@/lib/safe-storage";
+import { toast } from "sonner";
 
 // Define the form schema
 const formSchema = z.object({
@@ -96,6 +97,8 @@ export default function SignupCard() {
 
     if (!signupToken) {
       console.error("No signup token found");
+      toast.error("Signup token expired or not found. Please log in or verify OTP again.");
+      router.push("/login");
       return;
     }
 

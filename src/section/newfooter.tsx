@@ -39,7 +39,7 @@ const linkGroups: FooterLinkGroup[] = [
     title: "Product",
     links: [
       { label: "Features", href: "/#features" },
-      { label: "Pricing", href: "/pricing" },
+      // { label: "Pricing", href: "/pricing" },
       { label: "Security", href: "/#security" },
       // { label: "Updates", href: "#" }
     ]

@@ -42,9 +42,6 @@ export const useCreateCashbook = () => {
                 exact: false
             });
             toast.success(res.message);
-            if (typeof window !== "undefined") {
-                window.location.reload();
-            }
         },
         onError: (error) => {
             toast.error(error.message || "Failed to create cashbook");

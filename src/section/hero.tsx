@@ -92,7 +92,7 @@ export default function Hero() {
                 Create account
               </button>
             </Link>
-            <Link href="/#" className="w-full sm:w-auto">
+            <Link href="/demo" className="w-full sm:w-auto">
               <button className="w-full sm:w-auto border border-white/80 hover:border-white hover:bg-white/10 text-white font-semibold rounded-full px-6 py-3 sm:px-8 sm:py-3.5 transition-all duration-200 text-sm sm:text-base cursor-pointer">
                 See Demo
               </button>

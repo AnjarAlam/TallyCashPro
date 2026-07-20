@@ -62,6 +62,7 @@ interface ExportButtonProps {
   variant?: string;
   className?: string;
   filters?: Record<string, any>;
+  disabled?: boolean;
 }
 
 interface ExportFilters {
@@ -74,7 +75,7 @@ interface ExportFilters {
   pageSize: number;
 }
 
-export function ExportButton({ bookId, businessId, token }: ExportButtonProps) {
+export function ExportButton({ bookId, businessId, token, disabled }: ExportButtonProps) {
   const { toast } = useToast();
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [exportType, setExportType] = useState<"pdf" | "excel" | null>(null);
@@ -327,10 +328,15 @@ export function ExportButton({ bookId, businessId, token }: ExportButtonProps) {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger asChild disabled={disabled}>
           <Button 
             variant="outline" 
-            className="flex items-center gap-2 border-[#3b82f6] bg-[#f0f4ff] hover:bg-[#e0ebff] text-[#3b82f6] w-full sm:w-auto text-xs px-5 py-2 h-9 font-semibold rounded-full shadow-sm transition-colors cursor-pointer"
+            disabled={disabled}
+            className={`flex items-center gap-2 border-[#3b82f6] bg-[#f0f4ff] hover:bg-[#e0ebff] text-[#3b82f6] w-full sm:w-auto text-xs px-5 py-2 h-9 font-semibold rounded-full shadow-sm transition-colors ${
+              disabled 
+                ? "opacity-50 cursor-not-allowed pointer-events-none" 
+                : "cursor-pointer"
+            }`}
           >
             <Printer className="h-4 w-4 text-[#3b82f6]" />
             <span>View report</span>

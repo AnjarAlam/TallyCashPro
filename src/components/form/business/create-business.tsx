@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useCreateBusiness } from "@/services";
 import { BusinessCategory } from "@/interface";
+import { useRouter } from "next/navigation";
 import {
     Utensils,
     CookingPot,
@@ -48,7 +49,7 @@ interface BusinessFormProps {
 const CATEGORIES = [
     {
         id: BusinessCategory.RETAIL_STORE,
-        label: "Food Drink",
+        label: "Retail Store",
         icon: Utensils,
         color: "bg-[#EF4444]", // Red
     },
@@ -60,7 +61,7 @@ const CATEGORIES = [
     },
     {
         id: BusinessCategory.SERVICE_BUSINESS,
-        label: "Service",
+        label: "Service Business",
         icon: Wrench,
         color: "bg-[#8B5CF6]", // Purple
     },
@@ -72,7 +73,7 @@ const CATEGORIES = [
     },
     {
         id: BusinessCategory.ONLINE_BUSINESS,
-        label: "Online",
+        label: "Online Business",
         icon: Laptop,
         color: "bg-[#10B981]", // Emerald Green
     },
@@ -109,6 +110,7 @@ const CATEGORIES = [
 ];
 
 export default function CreateBusinessForm({ onClose }: BusinessFormProps) {
+    const router = useRouter();
     const {
         createBusiness,
         isCreatingBusiness,
@@ -125,9 +127,12 @@ export default function CreateBusinessForm({ onClose }: BusinessFormProps) {
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         createBusiness(values, {
-            onSuccess: (data) => {
-                console.log("Business created:", data);
+            onSuccess: (res) => {
+                console.log("Business created:", res);
                 onClose();
+                if (res?.data?._id) {
+                    router.push(`/dashboard/business/${res.data._id}/book`);
+                }
             },
             onError: (err) => {
                 console.error("Error creating business:", err);
@@ -217,7 +222,7 @@ export default function CreateBusinessForm({ onClose }: BusinessFormProps) {
                                                 <div
                                                     key={cat.id}
                                                     onClick={() => form.setValue("category", cat.id)}
-                                                    className={`flex items-center gap-2 p-1 pr-3 rounded-full border transition-all cursor-pointer ${isSelected
+                                                    className={`flex items-center gap-1 p-1 pr-2 rounded-full border transition-all cursor-pointer ${isSelected
                                                         ? "border-[#3b82f6] bg-blue-50/10 ring-[0.5px] ring-[#3b82f6]"
                                                         : "border-slate-200 hover:bg-slate-50/50 bg-white"
                                                         }`}

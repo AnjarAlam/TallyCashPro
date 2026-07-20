@@ -13,7 +13,7 @@ export default function Header() {
 
   const navLinks = [
     { href: "/solutions", label: "Solutions", hasDropdown: false },
-    { href: "/pricing", label: "Pricing", hasDropdown: false },
+    // { href: "/pricing", label: "Pricing", hasDropdown: false },
     { href: "/partner", label: "Partner with us", hasDropdown: false },
     { href: "/resources", label: "Resources", hasDropdown: false },
   ];

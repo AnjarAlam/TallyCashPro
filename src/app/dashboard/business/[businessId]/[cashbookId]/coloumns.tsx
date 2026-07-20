@@ -39,7 +39,7 @@ export const columns: ColumnDef<Transaction>[] = [
     header: "Details",
     cell: ({ row }) => {
       const category =
-        row.original.categoryDetails?.name || row.original.category;
+        row.original.categoryDetails?.name || row.original.categoryName || row.original.category;
       return (
         <div className="flex flex-col gap-1 min-w-0">
           {category && (
@@ -58,7 +58,7 @@ export const columns: ColumnDef<Transaction>[] = [
     header: "Category",
     cell: ({ row }) => {
       const category =
-        row.original.categoryDetails?.name || row.original.category;
+        row.original.categoryDetails?.name || row.original.categoryName || row.original.category;
       return <div className="capitalize">{category || "--"}</div>;
     },
   },
@@ -68,7 +68,7 @@ export const columns: ColumnDef<Transaction>[] = [
     header: "Mode",
     cell: ({ row }) => {
       const paymentMode =
-        row.original.paymentModeDetails?.name || row.original.paymentMode;
+        row.original.paymentModeDetails?.name || row.original.paymentModeName || row.original.paymentMode;
       return <div className="capitalize">{paymentMode}</div>;
     },
   },

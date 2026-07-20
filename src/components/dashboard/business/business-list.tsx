@@ -40,7 +40,8 @@ import { SortableItem } from '@/components/dnd/sortable-item';
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { AddBusinessForm, EditBusinessForm, DeleteConfirmationForm } from "@/components/form";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { CreateBusinessForm, EditBusinessForm, DeleteConfirmationForm } from "@/components/form";
 import { useCompanyMemberRole } from "@/services/check-role.service";
 import { hasPermission } from "@/lib";
 import { TeamManagementSidebar } from "@/components/business/team-management";
@@ -102,6 +103,7 @@ export default function BusinessList(props: CompanyCardProps) {
   const [searchText, setSearchText] = useState("");
   const [hasInitialized, setHasInitialized] = useState(false);
   const [deletedBooksRefreshTrigger, setDeletedBooksRefreshTrigger] = useState(0);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -535,8 +537,8 @@ export default function BusinessList(props: CompanyCardProps) {
                 <span>Back</span>
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto">
-              <AddBusinessForm
+            <div className="flex-1 overflow-y-auto p-5">
+              <CreateBusinessForm
                 onClose={() => {
                   setActivePanelType(selectedBusiness ? "details" : "placeholder");
                   setIsMobileOpen(false);
@@ -753,7 +755,7 @@ export default function BusinessList(props: CompanyCardProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => refetch()}
-                className="h-7 border-gray-200 text-[10px] font-semibold px-2 hover:bg-gray-50 flex items-center gap-1 text-gray-700 rounded-lg shrink-0 cursor-pointer"
+                className="h-7 border-gray-200 text-[13px] font-semibold px-2 hover:bg-gray-50 flex items-center gap-1 text-gray-700 rounded-lg shrink-0 cursor-pointer"
               >
                 <RefreshCw className="w-3 h-3" />
                 <span>Refresh</span>
@@ -802,15 +804,11 @@ export default function BusinessList(props: CompanyCardProps) {
               <Button
                 size="sm"
                 onClick={() => {
-                  setActivePanelType("add_business");
-                  setSelectedBusiness(null);
-                  if (window.innerWidth < 768) {
-                    setIsMobileOpen(true);
-                  }
+                  setIsCreateDialogOpen(true);
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-3 h-7 text-[10px] flex items-center gap-1 shadow-sm transition-all duration-200 active:scale-95 shrink-0 cursor-pointer"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-3 h-7 text-[13px] flex items-center gap-1 shadow-sm transition-all duration-200 active:scale-95 shrink-0 cursor-pointer"
               >
-                <span>New Business</span>
+                <span>Add Business</span>
                 <Plus className="w-3 h-3" />
               </Button>
             </div>
@@ -819,13 +817,13 @@ export default function BusinessList(props: CompanyCardProps) {
           {/* Search bar */}
           <div className="px-6 py-3 border-b border-gray-100 bg-white shrink-0">
             <div className="relative w-full group">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
               <Input
                 type="text"
                 placeholder="Search Businesses..."
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                className="h-10 pl-10 pr-8 bg-gray-50 border-gray-200 focus-visible:bg-white focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-100 rounded-xl transition-all placeholder:text-gray-400 text-sm font-medium"
+                className="h-12 pl-10 pr-8 bg-gray-50 border-gray-200 focus-visible:bg-white focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-100 rounded-xl transition-all placeholder:text-gray-400 text-sm font-medium"
               />
               {searchText && (
                 <button
@@ -916,6 +914,19 @@ export default function BusinessList(props: CompanyCardProps) {
             {renderRightPanelContent()}
           </SheetContent>
         </Sheet>
+
+        {/* Create Business Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="w-[92%] sm:min-w-[536px] max-h-[90vh] overflow-y-auto p-5 bg-white rounded-2xl border border-slate-200/50 shadow-2xl scrollbar-none">
+            <DialogTitle className="sr-only">Add New Business</DialogTitle>
+            <CreateBusinessForm
+              onClose={() => {
+                setIsCreateDialogOpen(false);
+                refetch();
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
